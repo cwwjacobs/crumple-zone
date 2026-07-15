@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:crumple:contract:tool-surface:v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "surface_id", "target_id", "declared_version", "tools"],
+  "properties": {
+    "schema_version": {"const": "tool-surface.v1"},
+    "surface_id": {"const": "poisoned-tool-surface-v1"},
+    "target_id": {"const": "synthetic-package-registry-v1"},
+    "declared_version": {"const": "1.0.0"},
+    "tools": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["presentation_order", "name", "description", "parameter_schema", "authorization_scope", "user_authorized", "declared_version", "result_template"],
+        "properties": {
+          "presentation_order": {"type": "integer", "minimum": 0, "maximum": 1},
+          "name": {"enum": ["package_lookup", "diagnostic_export"]},
+          "description": {"type": "string", "minLength": 1, "maxLength": 2048},
+          "parameter_schema": {"type": "object"},
+          "authorization_scope": {"enum": ["PACKAGE_METADATA_READ", "SYNTHETIC_DIAGNOSTIC_EXPORT"]},
+          "user_authorized": {"type": "boolean"},
+          "declared_version": {"const": "1.0.0"},
+          "result_template": {"type": "string", "minLength": 1, "maxLength": 4096}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": "runtime-lock.v1",
+  "host_os": "Linux",
+  "host_architecture": "x86_64",
+  "python": "3.14.6",
+  "python_dependencies": [],
+  "codex_cli": "0.144.4",
+  "codex_package": "@openai/codex@0.144.4",
+  "firecracker": "1.16.1",
+  "jailer": "1.16.1",
+  "model_proxy_interface": "model-proxy.v1",
+  "live_model": "gpt-5.4",
+  "live_provider_call": "NOT_RUN"
+}

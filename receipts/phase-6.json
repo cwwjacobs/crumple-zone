@@ -1,0 +1,181 @@
+{
+  "receipt_schema_version": "phase-receipt.v1",
+  "phase_id": "PHASE_6",
+  "objective": "Deliver the reproducible Build Target 1 product path: strict CLI, setup and teardown, pinned artifacts, architecture and claim-boundary documentation, one-command synthetic demo, deterministic infrastructure fixture, receipt verification, limitations, and a clean-state acceptance suite.",
+  "started_at": "2026-07-15T05:09:33-05:00",
+  "completed_at": "2026-07-15T05:30:52-05:00",
+  "repository_commit_before": "e873d38c41935d8b24e54d8693c8c80d40e73c02",
+  "repository_commit_after": "WORKTREE_UNCOMMITTED",
+  "versions": {
+    "product": "crumple-zone-0.1.0",
+    "cli": "crumple-cli.v1",
+    "receipt_verifier": "receipt-verification.v1",
+    "build_lock": "build-target-lock.v1",
+    "python": "3.14.6",
+    "codex_cli": "0.144.4",
+    "firecracker": "1.16.1",
+    "guest_kernel": "6.1.176"
+  },
+  "declared_files": [
+    ".gitignore",
+    "README.md",
+    "pyproject.toml",
+    "src/crumple_zone/cli.py",
+    "src/crumple_zone/contracts.py",
+    "src/crumple_zone/run_store.py",
+    "src/crumple_zone/receipt_verifier.py",
+    "src/crumple_zone/build_backend.py",
+    "scripts/setup.sh",
+    "scripts/teardown.sh",
+    "scripts/demo.sh",
+    "scripts/test-fixture.sh",
+    "scripts/verify-receipts.sh",
+    "scripts/build-phase2-rootfs.sh",
+    "scripts/build-phase3-rootfs.sh",
+    "docs/ARCHITECTURE.md",
+    "docs/CLAIM_BOUNDARIES.md",
+    "docs/LIMITATIONS.md",
+    "tests/test_cli_product.py",
+    "receipts/phase-6.json"
+  ],
+  "actual_changed_files": [
+    ".gitignore",
+    "README.md",
+    "docs/ARCHITECTURE.md",
+    "docs/CLAIM_BOUNDARIES.md",
+    "docs/LIMITATIONS.md",
+    "pyproject.toml",
+    "receipts/phase-6.json",
+    "scripts/build-phase2-rootfs.sh",
+    "scripts/build-phase3-rootfs.sh",
+    "scripts/demo.sh",
+    "scripts/setup.sh",
+    "scripts/teardown.sh",
+    "scripts/test-fixture.sh",
+    "scripts/verify-receipts.sh",
+    "src/crumple_zone/build_backend.py",
+    "src/crumple_zone/cli.py",
+    "src/crumple_zone/contracts.py",
+    "src/crumple_zone/receipt_verifier.py",
+    "src/crumple_zone/run_store.py",
+    "tests/test_cli_product.py"
+  ],
+  "assumptions": [
+    "The supported product host is Linux x86-64 with read/write KVM access and the pinned Codex CLI already installed.",
+    "The repository checkout remains present after installation because pinned schemas, images, scenarios, locks, receipts, and retained host evidence are intentional product assets.",
+    "Build Target 1 uses the scripted Responses-compatible provider unless an Operator later supplies a live runtime credential; setup and demo never request or create a credential.",
+    "The one-command demo is synthetic, owned, and safe; its model-process evidence is not presented as a live-model injection success.",
+    "The trusted CLI defaults expose only fixed-schema events and typed projections; quarantined output requires both an operator-only flag and a fixed trace selector."
+  ],
+  "commands_executed": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python -m unittest tests.test_cli_product -v",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "Six CLI, run-store, receipt-contract, and receipt-lock mutation tests passed."
+    },
+    {
+      "command": "./scripts/demo.sh",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "Synthetic demo emitted 104 JSON records and CRUMPLE_SYNTHETIC_DEMO_COMPLETE; source run run_1a01aab7d9a4b0eb and fresh rerun run_18146351e03dab0d both retained verified evidence and teardown=true."
+    },
+    {
+      "command": "./scripts/test-fixture.sh",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "DETERMINISTIC_INFRASTRUCTURE_FIXTURE_PASS; observe reached only the synthetic sinkhole and capability-bound blocked before effect."
+    },
+    {
+      "command": "./scripts/setup.sh; installed crumple --help/show/verify/verify-receipts smoke",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone and /tmp",
+      "exit_code": 0,
+      "concise_output": "CRUMPLE_SETUP_COMPLETE; installed help, typed show, evidence verification, and six-receipt pre-seal verification passed from outside the checkout."
+    },
+    {
+      "command": "clean teardown; complete unittest discovery; e2fsck; secret-pattern, orphan, shell, C, and Python checks",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "35 tests passed in 41.906 seconds; three ext4 images clean; zero key-shaped literals; zero mutable-run orphans; all static checks passed."
+    },
+    {
+      "command": "initial combined validation command with unmatched guest subdirectory C globs",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "INVALID_TEST_RESULT_DISCARDED: cc reported nonexistent glob inputs while the non-strict outer shell returned zero; rerun with set -e and guest/*.c passed."
+    }
+  ],
+  "tests_and_falsifiers": [
+    {"test": "CLI rejects arbitrary targets and policies", "exit_code": 0, "result": "PASS"},
+    {"test": "CLI verify confines paths to exact retained evidence envelopes", "exit_code": 0, "result": "PASS"},
+    {"test": "Operator trace requires explicit operator-only and fixed trace flags", "exit_code": 0, "result": "PASS"},
+    {"test": "Trusted run timeline is append-only and sequence checked", "exit_code": 0, "result": "PASS"},
+    {"test": "Receipt contract mutation fails", "exit_code": 0, "result": "PASS"},
+    {"test": "Receipt-chain content mutation fails hash-lock verification", "exit_code": 0, "result": "PASS"},
+    {"test": "Setup verifies pinned image and Codex hashes and installs without external Python dependencies", "exit_code": 0, "result": "PASS"},
+    {"test": "Installed CLI works from outside the repository and still validates schemas", "exit_code": 0, "result": "PASS"},
+    {"test": "One-command demo exercises, watches, shows, replays policy, reruns scenario, and verifies evidence", "exit_code": 0, "result": "PASS"},
+    {"test": "Deterministic fixture distinguishes observe effect from enforce block", "exit_code": 0, "result": "PASS"},
+    {"test": "Complete Phase 0-6 suite on current sources", "exit_code": 0, "result": "35_PASS"},
+    {"test": "All three pinned ext4 images pass read-only filesystem checks", "exit_code": 0, "result": "PASS"},
+    {"test": "Repository scan contains no API-key-shaped literal", "exit_code": 0, "result": "PASS"},
+    {"test": "No mutable run directory or Firecracker helper remains after suite", "exit_code": 0, "result": "PASS"},
+    {"test": "Shell syntax, guest C syntax, and Python compilation pass under strict command execution", "exit_code": 0, "result": "PASS"}
+  ],
+  "generated_artifacts": [
+    {"path": ".crumple/evidence/run_1a01aab7d9a4b0eb/evidence-envelope.json", "sha256": "8e0ec6308d91637dca11e28b7ab0d66b6a162773f5b9ff4637b3dd452ba1e235"},
+    {"path": ".crumple/evidence/run_18146351e03dab0d/scenario-rerun-comparison.json", "sha256": "94647fb850637bc11169fa188e82d6846fdbff5f4837326b11ae32ed05247370"},
+    {"path": "src/crumple_zone/cli.py", "sha256": "d6ce603ab1e421268ec9756064eb3a869b881ebac8f8a93a559ff6fd568052b4"},
+    {"path": "src/crumple_zone/contracts.py", "sha256": "8227aeab36fc28b16e44683eccee5b27785669c41b696425452e61a20b55a543"},
+    {"path": "src/crumple_zone/receipt_verifier.py", "sha256": "6bd3133ca9286199f3a2751dd428c779ab6aa4daab1efa67b075294f315e4abd"},
+    {"path": "scripts/setup.sh", "sha256": "d459f136b9c3d0359c22783aa2956b3637c9935a57f83d721d01d79fe51bbaca"},
+    {"path": "scripts/demo.sh", "sha256": "7421dbb8bdc67bd7e3128638ed369570f0d2e0980756172b9aa47f606ba81380"},
+    {"path": "README.md", "sha256": "3a06ec1177e93f30794f93cf2cea26580d296075702186288aa49008781fa731"},
+    {"path": "docs/ARCHITECTURE.md", "sha256": "96f03617be9a8ff26a9244c9dccf39acd6d965a5a8fac2f288890014c758184a"},
+    {"path": "docs/CLAIM_BOUNDARIES.md", "sha256": "bb0695d9b2f6d98557ad07f2f4112488623fc9c9faf7e4a5607c1b454984a58a"},
+    {"path": "docs/LIMITATIONS.md", "sha256": "d9e30ff5e8e7bb914de402eae2284fbb04f8191054aad31dc98f42aaed1b5712"}
+  ],
+  "invariants_exercised": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+  "authority_claims": [
+    {"claim_code": "CLI_REQUEST_SURFACE_STRICT", "authority": "HOST_ENFORCED"},
+    {"claim_code": "TRUSTED_TIMELINE_DEFAULT", "authority": "HOST_ENFORCED"},
+    {"claim_code": "QUARANTINE_REQUIRES_OPERATOR_OPT_IN", "authority": "HOST_ENFORCED"},
+    {"claim_code": "PINNED_ARTIFACT_HASHES_VERIFIED", "authority": "HOST_ENFORCED"},
+    {"claim_code": "DEMO_TARGET_ACTIONS_MEDIATED", "authority": "HOST_MEDIATED"},
+    {"claim_code": "DEMO_CHAMBERS_TORN_DOWN", "authority": "HOST_ENFORCED"},
+    {"claim_code": "LIVE_PROVIDER_CALL_NOT_RUN", "authority": "HOST_ENFORCED"}
+  ],
+  "limitations_and_checks_not_run": [
+    "LIVE_PROVIDER_CALL_NOT_RUN with reason OPERATOR_CREDENTIAL_UNAVAILABLE; no credential was created, copied, stored, requested, logged, or placed in a guest.",
+    "The retained demo used SCRIPTED_MOCK_PROVIDER and its INCONCLUSIVE verdict is not evidence that a live model followed the poisoned text.",
+    "Observe and enforce consequential paths are proven by the explicitly labeled deterministic fixture; the retained real Codex process did not call diagnostic_export.",
+    "The product is pinned to the tested Linux x86-64/KVM host and Codex 0.144.4; other hosts and versions were not checked.",
+    "Setup installs a wrapper coupled to this checkout because schemas, guest images, scenario locks, receipts, and retained evidence are intentionally outside the Python package.",
+    "Receipt verification distinguishes missing historical artifacts and later-phase supersession; integrity is never presented as safety.",
+    "No host-authoritative filesystem, syscall, process-internal, hidden-model-state, global safety, or causal prompt-injection claim is made."
+  ],
+  "detected_drift": [
+    "A validation-only shell expression using ! find was discarded because find success does not mean a match; the corrected match-content check passed.",
+    "A validation-only C glob referenced nonexistent subdirectories and ran without outer set -e; that result was discarded and the strict guest/*.c rerun passed.",
+    "No product, trust-boundary, evidence-authority, dependency-class, or phase-scope drift was detected."
+  ],
+  "repair_attempts": [
+    {
+      "attempt": 1,
+      "failure": "System Python rejected pip install --user under externally-managed-environment policy.",
+      "repair": "Install the dependency-free wheel into a repository-local virtual environment and expose only a narrow user-local launcher.",
+      "test_result": "setup completed and installed CLI help passed",
+      "exit_code": 0
+    },
+    {
+      "attempt": 2,
+      "failure": "Installed CLI smoke exposed symlink-follow self-recursion and schema lookup derived from the installed module path.",
+      "repair": "Replace any prior launcher symlink before writing the wrapper and bind both CLI and contract roots to the wrapper-injected repository location.",
+      "test_result": "installed help, typed show, evidence verification, and receipt verification passed from /tmp; 35-test clean regression passed",
+      "exit_code": 0
+    }
+  ],
+  "final_verdict": "REPAIRED_PASS",
+  "next_admitted_phase": "NONE",
+  "stop_reason": ""
+}

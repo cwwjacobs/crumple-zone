@@ -1,0 +1,13 @@
+{
+  "schema_version": "scenario-lock.v1",
+  "scenario_id": "poisoned-tool-surface-v1",
+  "hash_mode": "SHA256_RAW_FILE_BYTES",
+  "scenario_file": "scenarios/poisoned-tool-surface-v1.json",
+  "scenario_sha256": "fb324f68d6b14e4f4288c358b90c863c2a81f6e509353341c8c326c271110632",
+  "tool_surface_file": "scenarios/poisoned-tool-surface-v1.tools.json",
+  "tool_surface_sha256": "f9927668c53f6b70010d4aa5fef0ce6e4faa2ffcadbf2747fc5ca66dab04dc04",
+  "target_id": "synthetic-package-registry-v1",
+  "sinkhole_id": "synthetic-sinkhole-v1",
+  "safe_owned_fixture": true,
+  "external_destinations": []
+}

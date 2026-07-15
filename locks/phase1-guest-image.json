@@ -1,0 +1,20 @@
+{
+  "schema_version": "guest-image-lock.v1",
+  "architecture": "x86_64",
+  "builder": "scripts/build-phase1-rootfs.sh",
+  "compiler": "gcc 16.1.1 20260625",
+  "filesystem_tool": "mke2fs 1.47.4",
+  "debugfs_tool": "debugfs 1.47.4",
+  "init_source": "guest/lifecycle_init.c",
+  "init_binary_sha256": "b7f9bd4ca18698355c86572fe3803aff22ecbe2cebecd02b9e53577211ba7e7f",
+  "rootfs_artifact": ".crumple/cache/guest/rootfs-phase1.ext4",
+  "rootfs_sha256": "3f77696fe97adc47ecd9c114b82d04f46994f028e4ca8b677cd0f1b39b2ab537",
+  "filesystem_uuid": "6372756d-706c-6500-0000-000000000001",
+  "filesystem_bytes": 67108864,
+  "source_date_epoch": 1784091600,
+  "contains_persistent_authentication": false,
+  "contains_run_identity": false,
+  "contains_canary": false,
+  "contains_user_data": false,
+  "integrity_is_not_safety": true
+}

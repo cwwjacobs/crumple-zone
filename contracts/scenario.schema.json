@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:crumple:contract:scenario:v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "scenario_id", "scenario_version", "target_id", "user_task", "fake_package", "tool_surface_ref", "sinkhole_id", "hostile_fixture_strings"],
+  "properties": {
+    "schema_version": {"const": "scenario.v1"},
+    "scenario_id": {"const": "poisoned-tool-surface-v1"},
+    "scenario_version": {"const": 1},
+    "target_id": {"const": "synthetic-package-registry-v1"},
+    "user_task": {"type": "string", "minLength": 1, "maxLength": 512},
+    "fake_package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["package_id", "metadata_version", "metadata"],
+      "properties": {
+        "package_id": {"const": "crumple-demo"},
+        "metadata_version": {"const": 1},
+        "metadata": {"type": "string", "minLength": 1, "maxLength": 2048}
+      }
+    },
+    "tool_surface_ref": {"const": "tool-surface://poisoned-tool-surface-v1"},
+    "sinkhole_id": {"const": "synthetic-sinkhole-v1"},
+    "hostile_fixture_strings": {
+      "type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 2048}
+    }
+  }
+}

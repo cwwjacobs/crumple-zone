@@ -1,0 +1,7 @@
+.crumple/cache/
+.crumple/runs/
+.crumple/evidence/
+.crumple/venv/
+.crumple/last-run-id
+__pycache__/
+*.py[cod]

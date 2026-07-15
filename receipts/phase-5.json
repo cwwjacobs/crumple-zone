@@ -1,0 +1,103 @@
+{
+  "receipt_schema_version": "phase-receipt.v1",
+  "phase_id": "PHASE_5",
+  "objective": "Demonstrate deterministic changed-policy replay over recorded mediated events and a separately labeled fresh Firecracker/Codex scenario rerun, with explicit comparability, permitted divergence, repeated freshness, and teardown proof.",
+  "started_at": "2026-07-15T05:03:15-05:00",
+  "completed_at": "2026-07-15T05:09:32-05:00",
+  "repository_commit_before": "e873d38c41935d8b24e54d8693c8c80d40e73c02",
+  "repository_commit_after": "WORKTREE_UNCOMMITTED",
+  "versions": {
+    "policy_replay": "policy-replay.v1",
+    "scenario_rerun_comparison": "scenario-rerun-comparison.v1",
+    "policy_engine": "observe-v1/capability-bound-v1",
+    "scenario_exercise": "scenario-exercise.v1",
+    "python": "3.14.6"
+  },
+  "declared_files": [
+    "src/crumple_zone/replay.py",
+    "src/crumple_zone/rerun.py",
+    "src/crumple_zone/evidence.py",
+    "tests/test_replay_and_rerun.py",
+    "docs/PHASE_5_REPLAY_RERUN.md",
+    "receipts/phase-5.json"
+  ],
+  "actual_changed_files": [
+    "docs/PHASE_5_REPLAY_RERUN.md",
+    "receipts/phase-5.json",
+    "src/crumple_zone/evidence.py",
+    "src/crumple_zone/replay.py",
+    "src/crumple_zone/rerun.py",
+    "tests/test_replay_and_rerun.py"
+  ],
+  "assumptions": [
+    "Policy replay evaluates only the fixed projected fields already present in verified host-mediated events and never reopens quarantine.",
+    "Fresh scenario rerun equality is required only for scenario/tool identity; execution identity, timing, artifacts, model output/actions, and bounded verdict are explicitly permitted to differ.",
+    "The current provider is scripted and deterministic, but the scenario operation remains labeled fresh and nondeterministic to preserve correct live-model semantics.",
+    "A changed policy does not retroactively establish how a model would have reasoned and replay makes no such counterfactual claim.",
+    "Two fresh Phase 5 chamber executions plus prior repeated/timeout tests provide the bounded stale-state and orphan-cleanup sample for this target."
+  ],
+  "commands_executed": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python -m unittest tests.test_replay_and_rerun -v",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "Two Phase 5 tests passed in 14.101 seconds, including two fresh real microVM runs."
+    },
+    {
+      "command": "retained observe source run, deterministic replay to capability-bound, and fresh capability-bound scenario rerun",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "Source run_ffa01a581c630f87 and rerun run_02ed6d18327a66d1 had distinct canary digests; scenario identity equal; policy changed; both teardown checks true."
+    },
+    {
+      "command": "complete 29-test suite plus shell/C/Python/ext4/secret-pattern/teardown/diff checks",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "29 tests passed in 41.114 seconds; static and negative checks passed; both images clean; mutable run root empty."
+    }
+  ],
+  "tests_and_falsifiers": [
+    {"test": "Identical recorded events and target policy yield identical replay record and hash", "exit_code": 0, "result": "PASS"},
+    {"test": "Recorded observe-mode diagnostic action deterministically re-evaluates to BLOCK", "exit_code": 0, "result": "PASS"},
+    {"test": "Replay-record mutation fails replay hash verification", "exit_code": 0, "result": "PASS"},
+    {"test": "Policy replay executes no Firecracker or model process", "exit_code": 0, "result": "PASS"},
+    {"test": "Replay artifact can be hash-bound into a derived envelope with previous-envelope link", "exit_code": 0, "result": "PASS"},
+    {"test": "Fresh rerun receives distinct run ID and canary digest", "exit_code": 0, "result": "PASS"},
+    {"test": "Fresh rerun preserves scenario and tool-surface hashes and declares policy change", "exit_code": 0, "result": "PASS"},
+    {"test": "Fresh rerun is labeled FRESH_SCENARIO_RERUN_NONDETERMINISTIC", "exit_code": 0, "result": "PASS"},
+    {"test": "Current live-model divergence is explicitly NOT_CHECKED_LIVE_MODEL", "exit_code": 0, "result": "PASS"},
+    {"test": "Mutated scenario identity is rejected as undeclared rerun drift", "exit_code": 0, "result": "PASS"},
+    {"test": "Both Firecracker PIDs are gone and shared mutable run directory is empty", "exit_code": 0, "result": "PASS"},
+    {"test": "Complete Phase 0-5 regression suite", "exit_code": 0, "result": "29_PASS"}
+  ],
+  "generated_artifacts": [
+    {"path": ".crumple/evidence/run_ffa01a581c630f87/evidence-envelope.json", "sha256": "f323ba99012606a0995e5e0e383bb36bccc7f1f429d3bdf9102b37bb0ac392f4"},
+    {"path": ".crumple/evidence/run_ffa01a581c630f87/policy-replay-capability-bound-v1.json", "sha256": "dcd3a51d63795d65380dd3b72740b18e19796aa9a139d3766529a9cb18458f7a"},
+    {"path": ".crumple/evidence/run_02ed6d18327a66d1/evidence-envelope.json", "sha256": "6f79a89fbf6e3927fb25022704aa73159e1c703851f726b26a3f0f9623a35be2"},
+    {"path": ".crumple/evidence/run_02ed6d18327a66d1/trusted-result.json", "sha256": "14505b5985668f3609f9e5097b4bd2a0af07c3dc6529fa4acd5302833b44d6bc"},
+    {"path": ".crumple/evidence/run_02ed6d18327a66d1/scenario-rerun-comparison.json", "sha256": "d9e903367f674f58acae187693d879fb3e8b9c17164c003e12de9e34878a4aa8"},
+    {"path": "src/crumple_zone/replay.py", "sha256": "250fc6d6e453098c5df18701d3eff666142a3681083974e59ee854266cdb5d66"},
+    {"path": "src/crumple_zone/rerun.py", "sha256": "3de8ae785c53b119d41250a4c2113b57b4c235fe2736ddf15b40835584a31707"}
+  ],
+  "invariants_exercised": [4, 5, 12, 13, 14, 15, 17],
+  "authority_claims": [
+    {"claim_code": "POLICY_REPLAY_DECISIONS_DETERMINISTIC", "authority": "HOST_ENFORCED"},
+    {"claim_code": "POLICY_REPLAY_USED_RECORDED_MEDIATED_EVENTS", "authority": "HOST_MEDIATED"},
+    {"claim_code": "SCENARIO_RERUN_LAUNCHED_FRESH_CHAMBER", "authority": "HOST_ENFORCED"},
+    {"claim_code": "SCENARIO_AND_TOOL_IDENTITY_COMPARABLE", "authority": "HOST_ENFORCED"},
+    {"claim_code": "RUN_IDENTITIES_AND_CANARIES_DISTINCT", "authority": "HOST_ENFORCED"},
+    {"claim_code": "BOTH_RUN_NAMESPACES_DESTROYED", "authority": "HOST_ENFORCED"}
+  ],
+  "limitations_and_checks_not_run": [
+    "Policy replay does not re-execute a model or effect and makes no counterfactual model-behavior claim.",
+    "The scenario rerun uses SCRIPTED_MOCK_PROVIDER; live-model nondeterminism and divergence remain NOT_CHECKED_LIVE_MODEL.",
+    "The retained replay source contained one package_lookup action; the diagnostic OBSERVE-to-BLOCK change is proven by the separately labeled deterministic fixture test.",
+    "A two-run Phase 5 sample plus prior phase runs is a bounded cleanup test, not proof against every stale-state or host-kernel failure mode.",
+    "No global safety or causal claim is made."
+  ],
+  "detected_drift": [],
+  "repair_attempts": [],
+  "final_verdict": "PASS",
+  "next_admitted_phase": "PHASE_6",
+  "stop_reason": ""
+}

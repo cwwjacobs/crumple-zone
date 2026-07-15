@@ -1,0 +1,107 @@
+{
+  "receipt_schema_version": "phase-receipt.v1",
+  "phase_id": "PHASE_4",
+  "objective": "Produce canonical integrity-bound evidence and a strict typed trusted projection while keeping all guest/target semantics in separately gated quarantine artifacts.",
+  "started_at": "2026-07-15T04:56:50-05:00",
+  "completed_at": "2026-07-15T05:03:14-05:00",
+  "repository_commit_before": "e873d38c41935d8b24e54d8693c8c80d40e73c02",
+  "repository_commit_after": "WORKTREE_UNCOMMITTED",
+  "versions": {
+    "event_contract": "event.v1",
+    "finding_contract": "finding.v1",
+    "evidence_contract": "evidence-envelope.v1",
+    "trusted_projection_contract": "trusted-projection.v1",
+    "canonical_encoding": "JSON_SORTED_KEYS_ASCII_ESCAPED_NO_INSIGNIFICANT_WHITESPACE",
+    "digest": "SHA-256",
+    "python": "3.14.6"
+  },
+  "declared_files": [
+    "src/crumple_zone/evidence.py",
+    "src/crumple_zone/projector.py",
+    "src/crumple_zone/trace_store.py",
+    "src/crumple_zone/codex_chamber.py",
+    "tests/test_evidence_boundary.py",
+    "docs/PHASE_4_EVIDENCE_BOUNDARY.md",
+    "receipts/phase-4.json"
+  ],
+  "actual_changed_files": [
+    "docs/PHASE_4_EVIDENCE_BOUNDARY.md",
+    "receipts/phase-4.json",
+    "src/crumple_zone/codex_chamber.py",
+    "src/crumple_zone/evidence.py",
+    "src/crumple_zone/projector.py",
+    "src/crumple_zone/trace_store.py",
+    "tests/test_evidence_boundary.py"
+  ],
+  "assumptions": [
+    "The trusted host evidence directory and controller process are inside the trusted computing base for Build Target 1.",
+    "A self-hashed envelope detects accidental or unapproved mutation when compared to its retained hash but is not an external signature or safety attestation.",
+    "Scenario and target tool JSON remain raw source artifacts; only their hashes, sizes, media codes, and IDs may enter the envelope/projection.",
+    "The trusted projection schema fixed in Phase 0 is sufficient and requires no guest-controlled semantic field.",
+    "Operator-only trace access is a deliberate human action and is never called by trusted projection assembly."
+  ],
+  "commands_executed": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python -m unittest tests.test_evidence_boundary -v",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "One real chamber evidence/egress integration test passed in 7.224 seconds, including mutations and trace gating."
+    },
+    {
+      "command": "retained real Phase 4 run, envelope assembly, projection write, and verification",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "run_81dd5127cac7ba31 produced 33 events, two authority-labeled findings, five artifact records, INCONCLUSIVE projection, and verified teardown."
+    },
+    {
+      "command": "complete 27-test suite plus shell/C/Python/ext4/secret-pattern/teardown/diff checks",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "27 tests passed in 27.571 seconds; static and negative checks passed; both rootfs images clean; mutable run directory empty."
+    }
+  ],
+  "tests_and_falsifiers": [
+    {"test": "Event hashes are stable under exact canonical copies", "exit_code": 0, "result": "PASS"},
+    {"test": "Events must be contiguous, ordered by sequence, scope-bound, and monotonic", "exit_code": 0, "result": "PASS"},
+    {"test": "Event-field mutation with unchanged envelope hash fails verification", "exit_code": 0, "result": "PASS"},
+    {"test": "Event reordering fails canonical verification", "exit_code": 0, "result": "PASS"},
+    {"test": "Artifact metadata mutation fails envelope verification", "exit_code": 0, "result": "PASS"},
+    {"test": "Finding and artifact references are validated and IDs are unique", "exit_code": 0, "result": "PASS"},
+    {"test": "Retained quarantine artifact hashes and sizes match the real files", "exit_code": 0, "result": "PASS"},
+    {"test": "Raw trace read without explicit operator-only opt-in fails", "exit_code": 0, "result": "PASS"},
+    {"test": "Every scenario hostile fixture, tool description, and result template is absent byte-for-byte from trusted projection", "exit_code": 0, "result": "PASS"},
+    {"test": "Projection includes fixed no-global-safety and no-causal-attribution limitations", "exit_code": 0, "result": "PASS"},
+    {"test": "Live-provider absence makes retained projection INCONCLUSIVE", "exit_code": 0, "result": "PASS"},
+    {"test": "Envelope and projection writes are create-once", "exit_code": 0, "result": "PASS"},
+    {"test": "Complete Phase 0-4 regression suite", "exit_code": 0, "result": "27_PASS"}
+  ],
+  "generated_artifacts": [
+    {"path": ".crumple/evidence/run_81dd5127cac7ba31/evidence-envelope.json", "sha256": "91bead02b32940a2f7d826672e375a91874327242f676ef9f74112357113fe82"},
+    {"path": ".crumple/evidence/run_81dd5127cac7ba31/trusted-result.json", "sha256": "b5c0cdd13cb40ab5315c0adad2e303c9c6f81239e779a52a8871e670aa57f11d"},
+    {"path": ".crumple/evidence/run_81dd5127cac7ba31/quarantine/codex.jsonl", "sha256": "aec8748068e0181090464612366531b125675c41867f7b5f617eaca89a2ad2b9"},
+    {"path": ".crumple/evidence/run_81dd5127cac7ba31/quarantine/codex.stderr", "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+    {"path": ".crumple/evidence/run_81dd5127cac7ba31/quarantine/firecracker.log", "sha256": "ed3dd3e861fa1d3cedf5f79b24aa9dec0e155a726b0ef9c8815630228b58b2f9"},
+    {"path": "src/crumple_zone/evidence.py", "sha256": "ea50ffc14941031eff72e07855d016932e349ac43c566d00e7e9ffd604a0fc17"},
+    {"path": "src/crumple_zone/projector.py", "sha256": "5ad34e3e4e19ba383d05691bc69d0092dce3999aa074c05d112abdc0a88d60be"}
+  ],
+  "invariants_exercised": [6, 7, 8, 9, 10, 13, 17],
+  "authority_claims": [
+    {"claim_code": "ENVELOPE_CANONICAL_HASH_VERIFIED", "authority": "HOST_ENFORCED"},
+    {"claim_code": "ARTIFACT_BYTES_MATCH_RECORDED_HASHES", "authority": "HOST_ENFORCED"},
+    {"claim_code": "FINDING_AUTHORITIES_DERIVED_FROM_FIXED_EVENT_CODES", "authority": "HOST_ENFORCED"},
+    {"claim_code": "RAW_TRACE_EXCLUDED_FROM_PROJECTION", "authority": "HOST_ENFORCED"},
+    {"claim_code": "TRACE_BYTES_REMAIN_QUARANTINED", "authority": "HOST_ENFORCED"}
+  ],
+  "limitations_and_checks_not_run": [
+    "Integrity proves retained byte identity, not artifact safety, truth, model causality, or external signer identity.",
+    "The envelope is self-hashed and protected by the trusted host filesystem; no TPM, transparency log, or independent signature is implemented.",
+    "LIVE_PROVIDER_CALL, POLICY_REPLAY, and SCENARIO_RERUN remain explicitly not executed in the retained Phase 4 envelope.",
+    "No guest-generated artifact promotion path is implemented or implied.",
+    "Raw quarantine inspection can expose hostile/model text to a human operator and therefore requires deliberate opt-in."
+  ],
+  "detected_drift": [],
+  "repair_attempts": [],
+  "final_verdict": "PASS",
+  "next_admitted_phase": "PHASE_5",
+  "stop_reason": ""
+}

@@ -1,0 +1,60 @@
+{
+  "schema_version": "build-target-lock.v1",
+  "target_id": "BUILD_TARGET_1",
+  "created_at": "2026-07-15T05:30:52-05:00",
+  "repository_commit": "e873d38c41935d8b24e54d8693c8c80d40e73c02",
+  "working_tree_state": "UNCOMMITTED_BUILD_ARTIFACTS",
+  "receipt_hash_algorithm": "SHA256",
+  "phase_receipts": [
+    {"phase_id": "PHASE_0", "path": "receipts/phase-0.json", "sha256": "9308a938cd0d96ba49ad84097a2145a6a7195ba87de2745c107a96cb727443ce"},
+    {"phase_id": "PHASE_1", "path": "receipts/phase-1.json", "sha256": "4de542513e43e1e2b621300c48bfeed43c52dda40a07c3ad33ae8cd1bf83bdc5"},
+    {"phase_id": "PHASE_2", "path": "receipts/phase-2.json", "sha256": "bcb3c00af9be3f5d89925e04baab6298af3b11a81a9ec5ead98d0e9937e4276e"},
+    {"phase_id": "PHASE_3", "path": "receipts/phase-3.json", "sha256": "f70a7def8748c2e509cd54711ee312aa515dc045d0278f7b03f898d30babcbff"},
+    {"phase_id": "PHASE_4", "path": "receipts/phase-4.json", "sha256": "301515dbe5bada9399a2b1c4f960407464aba8b9a0e3765b2eec20f8d61fe11f"},
+    {"phase_id": "PHASE_5", "path": "receipts/phase-5.json", "sha256": "e95d5f1a7635cbae1cf87243f5c79ce1721319ce5e79418c35b13fd27b378256"},
+    {"phase_id": "PHASE_6", "path": "receipts/phase-6.json", "sha256": "7d5dd78343aeac41d1ccd48d19525fd5f5168b3f43b659c0ad158a1f046ff5f8"}
+  ],
+  "runtime": {
+    "host_os": "Linux",
+    "host_architecture": "x86_64",
+    "kvm_access_verified": true,
+    "firecracker_version": "1.16.1",
+    "firecracker_binary_sha256": "2fd0171309af7e24cf8dafc8a6f921c1434c49b5f9349bb996b7ed0a4deb8aa7",
+    "guest_kernel_version": "6.1.176",
+    "guest_kernel_sha256": "b20af7585283b051f16f6ece46e7064165054efe112c4ab0e26a06ff8ebe9da4",
+    "phase3_rootfs_sha256": "ff42d037c7090668a76a6abd4dc4fd2b0d12c772224245ad6284e2c8871ae0c5",
+    "codex_cli_version": "0.144.4",
+    "codex_binary_sha256": "2b3edc9cdfd1717fba3dbc92817205a8a2c7511d459e456d4817eeff6f78ed7a",
+    "python_version": "3.14.6",
+    "external_python_dependencies": 0
+  },
+  "contract_bindings": {
+    "scenario_sha256": "fb324f68d6b14e4f4288c358b90c863c2a81f6e509353341c8c326c271110632",
+    "tool_surface_sha256": "f9927668c53f6b70010d4aa5fef0ce6e4faa2ffcadbf2747fc5ca66dab04dc04",
+    "observation_skill_sha256": "a6d4bdd244c3883335c5b4f60cfe0656cabf63ea41c8ba404322ba465d8e2064",
+    "runtime_lock_sha256": "a702a2897f64b05d11560114be0f95fbd09637bd42f94b64d0a67f77f867267d",
+    "scenario_lock_sha256": "3cc9e8396dc93c708f6d6428cc6a87e6555454f2f7b30d350208cac5eca441fb",
+    "phase3_image_lock_sha256": "c804e27d5a9ca732f11539892f82ebccd1d2b9c0cd99d93d9a360a808d5bf62f"
+  },
+  "retained_acceptance_evidence": {
+    "source_run_id": "run_1a01aab7d9a4b0eb",
+    "source_envelope_file_sha256": "8e0ec6308d91637dca11e28b7ab0d66b6a162773f5b9ff4637b3dd452ba1e235",
+    "source_trusted_result_file_sha256": "17a175ffec966b277b3595479a80d3e788f2a8c652f6e6f16b20321f785185b2",
+    "policy_replay_file_sha256": "1687160e3ce967a37780e40272f36e33a26db79a026fb2d2d0aa820e74d4428a",
+    "rerun_id": "run_18146351e03dab0d",
+    "rerun_envelope_file_sha256": "ac47fd98621f22e3cd6919d0c09eaf282711d636cf2f3eef904609ddebb72d2b",
+    "rerun_comparison_file_sha256": "94647fb850637bc11169fa188e82d6846fdbff5f4837326b11ae32ed05247370"
+  },
+  "bounded_status": {
+    "phase_result": "REPAIRED_PASS",
+    "model_run_verdict": "INCONCLUSIVE",
+    "live_provider_call": "NOT_RUN",
+    "live_provider_reason": "OPERATOR_CREDENTIAL_UNAVAILABLE",
+    "credential_created": false,
+    "scripted_mock_provider_used": true,
+    "deterministic_fixture_is_model_injection_evidence": false,
+    "global_safety_claim": false,
+    "causal_claim": false,
+    "integrity_is_safety": false
+  }
+}

@@ -1,0 +1,143 @@
+{
+  "receipt_schema_version": "phase-receipt.v1",
+  "phase_id": "PHASE_1",
+  "objective": "Implement and prove a real single-use Firecracker lifecycle with pinned artifacts, nonce-bound vsock handshake, post-admission fresh assignment, bounded resources, measured readiness, repeated-run freshness, forced-timeout cleanup, and teardown proof.",
+  "started_at": "2026-07-15T04:01:00-05:00",
+  "completed_at": "2026-07-15T04:20:07-05:00",
+  "repository_commit_before": "e873d38c41935d8b24e54d8693c8c80d40e73c02",
+  "repository_commit_after": "WORKTREE_UNCOMMITTED",
+  "versions": {
+    "firecracker_runtime_interface": "firecracker-runtime.v1",
+    "controller_interface": "controller.v1",
+    "lifecycle_protocol": "lifecycle.v1",
+    "firecracker": "1.16.1",
+    "guest_kernel": "6.1.176",
+    "gcc": "16.1.1",
+    "mke2fs": "1.47.4",
+    "python": "3.14.6"
+  },
+  "declared_files": [
+    ".gitignore",
+    "guest/",
+    "scripts/setup-phase1.sh",
+    "scripts/build-phase1-rootfs.sh",
+    "locks/",
+    "src/crumple_zone/firecracker_runtime.py",
+    "src/crumple_zone/controller.py",
+    "tests/test_firecracker_lifecycle.py",
+    "docs/PHASE_1_LIFECYCLE.md",
+    "receipts/phase-1.json"
+  ],
+  "actual_changed_files": [
+    ".gitignore",
+    "docs/PHASE_1_LIFECYCLE.md",
+    "guest/lifecycle_init.c",
+    "locks/firecracker-v1.16.1-x86_64.json",
+    "locks/guest-kernel-6.1.176-x86_64.json",
+    "locks/phase1-guest-image.json",
+    "receipts/phase-1.json",
+    "scripts/build-phase1-rootfs.sh",
+    "scripts/setup-phase1.sh",
+    "src/crumple_zone/controller.py",
+    "src/crumple_zone/firecracker_runtime.py",
+    "tests/test_firecracker_lifecycle.py"
+  ],
+  "assumptions": [
+    "Setup completes before controller admission; concurrent cache mutation and chamber execution are not admitted.",
+    "Cold-boot single-use correctness is required before snapshot or startup optimization.",
+    "The Firecracker vsock mapping is the sole Phase 1 guest-host data channel; no TAP device or external forwarding is configured.",
+    "The unprivileged Build Target 1 slice runs the pinned Firecracker binary directly; jailer hardening remains explicitly unchecked.",
+    "A new writable ext4 copy is created from the hash-checked base image for every admitted run and deleted during teardown."
+  ],
+  "commands_executed": [
+    {
+      "command": "bash scripts/setup-phase1.sh",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 126,
+      "concise_output": "Pinned downloads verified; initial setup stopped because the new rootfs builder lacked executable mode. No VM launched."
+    },
+    {
+      "command": "chmod 0755 scripts/setup-phase1.sh scripts/build-phase1-rootfs.sh; bash scripts/setup-phase1.sh",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "Firecracker, kernel, kernel config, static init, and ext4 image built and verified."
+    },
+    {
+      "command": "three retained diagnostic real-lifecycle invocations during implementation",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 1,
+      "concise_output": "Quarantined logs identified distinct local defects: Firecracker instance-ID charset, per-UID NPROC accounting, and HTTP keep-alive framing. Each failed run tore down."
+    },
+    {
+      "command": "real Firecracker lifecycle invocation after bounded fixes",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "Ready in 847 ms; assignment acknowledged; guest rebooted; Firecracker exit 0; PID, sockets, and run directory gone."
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest discover -s tests -v",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "19 tests passed sequentially after one exit-gate repair."
+    },
+    {
+      "command": "two-run typed lifecycle proof",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "Ready at 854 ms and 860 ms; distinct run IDs, canaries, and challenges; no prior state; both exits 0; both teardown checks true."
+    }
+  ],
+  "tests_and_falsifiers": [
+    {"test": "Pinned Firecracker archive, extracted binary, kernel, kernel config, static init, and rootfs hashes", "exit_code": 0, "result": "PASS"},
+    {"test": "Two rootfs builds separated in time are byte-identical", "exit_code": 0, "result": "PASS"},
+    {"test": "Two sequential real microVM boots use fresh identities, canaries, challenges, and writable copies", "exit_code": 0, "result": "PASS"},
+    {"test": "Both real sequential boots report no prior marker before assignment", "exit_code": 0, "result": "PASS"},
+    {"test": "Malformed handshake nonce is rejected", "exit_code": 0, "result": "PASS"},
+    {"test": "Invalid resource limits fail before launch", "exit_code": 0, "result": "PASS"},
+    {"test": "Two-second real VMM timeout forces process termination and removes run state", "exit_code": 0, "result": "PASS"},
+    {"test": "Fixed lifecycle events have HOST_ENFORCED authority", "exit_code": 0, "result": "PASS"},
+    {"test": "Guest image contains no API-key-shaped literal, OpenAI credential variable name, or auth.json", "exit_code": 0, "result": "PASS"},
+    {"test": "Shell syntax, C warnings-as-errors syntax, Python AST, diff whitespace, ext4 integrity, and empty run directory", "exit_code": 0, "result": "PASS"}
+  ],
+  "generated_artifacts": [
+    {"path": ".crumple/cache/firecracker/v1.16.1/firecracker-v1.16.1-x86_64", "sha256": "2fd0171309af7e24cf8dafc8a6f921c1434c49b5f9349bb996b7ed0a4deb8aa7"},
+    {"path": ".crumple/cache/kernel/6.1.176/vmlinux-6.1.176", "sha256": "b20af7585283b051f16f6ece46e7064165054efe112c4ab0e26a06ff8ebe9da4"},
+    {"path": ".crumple/cache/guest/crumple-lifecycle-init", "sha256": "b7f9bd4ca18698355c86572fe3803aff22ecbe2cebecd02b9e53577211ba7e7f"},
+    {"path": ".crumple/cache/guest/rootfs-phase1.ext4", "sha256": "3f77696fe97adc47ecd9c114b82d04f46994f028e4ca8b677cd0f1b39b2ab537"},
+    {"path": "src/crumple_zone/firecracker_runtime.py", "sha256": "259bfbb7095b99112a8d836d9857b586679b9867a0b43a4c5c0c7cf81f0f579e"},
+    {"path": "guest/lifecycle_init.c", "sha256": "bda149c13cdfa0b7bcdc7d68e8d583a995b58f99b30cf728f7e3a983d074ea8c"}
+  ],
+  "invariants_exercised": [1, 5, 14, 15],
+  "authority_claims": [
+    {"claim_code": "FIRECRACKER_PROCESS_STARTED", "authority": "HOST_ENFORCED"},
+    {"claim_code": "NONCE_HANDSHAKE_VERIFIED", "authority": "HOST_ENFORCED"},
+    {"claim_code": "ASSIGNMENT_CROSSED_VSOCK_MEDIATOR", "authority": "HOST_MEDIATED"},
+    {"claim_code": "GUEST_REPORTED_PRIOR_STATE_ABSENT", "authority": "GUEST_REPORTED"},
+    {"claim_code": "FIRECRACKER_PROCESS_TERMINATED", "authority": "HOST_ENFORCED"},
+    {"claim_code": "RUN_DIRECTORY_AND_SOCKETS_REMOVED", "authority": "HOST_ENFORCED"}
+  ],
+  "limitations_and_checks_not_run": [
+    "The pinned jailer was not used; production namespace/cgroup hardening is not claimed.",
+    "Linux RLIMIT_NPROC is per real host UID; the adapter enforces a bounded additional allowance, not a dedicated per-chamber cgroup.",
+    "The guest prior-state flag is GUEST_REPORTED; host enforcement independently proves a new rootfs copy and deletion of the run directory.",
+    "No live model provider, Codex guest process, target tool, or real user data was present in Phase 1.",
+    "No general guest syscall, process, or filesystem-read sensor is claimed."
+  ],
+  "detected_drift": [
+    "The first exit-gate orchestration incorrectly ran setup mutation and tests concurrently against one cache. Hash guards rejected transient artifacts; no architecture or trust-boundary change was required."
+  ],
+  "repair_attempts": [
+    {
+      "attempt": 1,
+      "original_failure": "Exit gate ran setup and lifecycle tests concurrently; kernel hash guard and one Firecracker start rejected transient cache state.",
+      "allowed_scope": "Verification ordering only; no product, contract, dependency, or trust-boundary change.",
+      "repair": "Completed setup first, verified all artifact hashes, then reran the full suite sequentially and performed read-only close checks.",
+      "retest_command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest discover -s tests -v",
+      "retest_exit_code": 0,
+      "retest_output": "19 tests passed in 5.199 seconds."
+    }
+  ],
+  "final_verdict": "REPAIRED_PASS",
+  "next_admitted_phase": "PHASE_2",
+  "stop_reason": ""
+}

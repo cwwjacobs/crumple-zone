@@ -1,0 +1,12 @@
+{
+  "artifact": "firecracker-v1.16.1-x86_64.tgz",
+  "release": "v1.16.1",
+  "architecture": "x86_64",
+  "official_repository": "firecracker-microvm/firecracker",
+  "release_url": "https://github.com/firecracker-microvm/firecracker/releases/tag/v1.16.1",
+  "artifact_url": "https://github.com/firecracker-microvm/firecracker/releases/download/v1.16.1/firecracker-v1.16.1-x86_64.tgz",
+  "sha256": "382a02a869e4d6d5cb14c40577f9545e8458021ea8b0b2d3fc10ec14d9c242e6",
+  "firecracker_binary_sha256": "2fd0171309af7e24cf8dafc8a6f921c1434c49b5f9349bb996b7ed0a4deb8aa7",
+  "signature_observation": "GitHub reports the v1.16.1 tag signature as verified; artifact integrity is independently checked against the published checksum.",
+  "integrity_is_not_safety": true
+}

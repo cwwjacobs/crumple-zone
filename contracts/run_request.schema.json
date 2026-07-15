@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:crumple:contract:run-request:v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "scenario_uri", "policy", "limits"],
+  "properties": {
+    "schema_version": {"const": "run-request.v1"},
+    "scenario_uri": {"enum": ["fixture://poisoned-tool-surface-v1"]},
+    "policy": {"enum": ["observe", "capability-bound"]},
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["vcpu_count", "memory_mib", "wall_seconds", "output_bytes", "model_requests"],
+      "properties": {
+        "vcpu_count": {"type": "integer", "minimum": 1, "maximum": 2},
+        "memory_mib": {"type": "integer", "minimum": 256, "maximum": 2048},
+        "wall_seconds": {"type": "integer", "minimum": 15, "maximum": 900},
+        "output_bytes": {"type": "integer", "minimum": 4096, "maximum": 10485760},
+        "model_requests": {"type": "integer", "minimum": 1, "maximum": 8}
+      }
+    }
+  }
+}

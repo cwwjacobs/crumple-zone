@@ -1,0 +1,163 @@
+{
+  "receipt_schema_version": "phase-receipt.v1",
+  "phase_id": "PHASE_0",
+  "objective": "Prove current-host viability and lock the strict contracts, official Firecracker release, installed Codex automation seam, dependency set, synthetic scenario, and host-owned model proxy boundary.",
+  "started_at": "2026-07-15T03:49:00-05:00",
+  "completed_at": "2026-07-15T04:00:07-05:00",
+  "repository_commit_before": "e873d38c41935d8b24e54d8693c8c80d40e73c02",
+  "repository_commit_after": "WORKTREE_UNCOMMITTED",
+  "versions": {
+    "host_kernel": "Linux 7.1.3-arch1-2 x86_64",
+    "python": "3.14.6",
+    "node": "26.4.0",
+    "rustc": "1.97.0",
+    "cargo": "1.97.0",
+    "codex_cli": "0.144.4",
+    "firecracker": "1.16.1",
+    "jailer": "1.16.1",
+    "model_proxy_interface": "model-proxy.v1",
+    "python_dependencies": []
+  },
+  "declared_files": [
+    "pyproject.toml",
+    "contracts/",
+    "scenarios/",
+    "locks/",
+    "src/crumple_zone/",
+    "tests/",
+    "docs/PHASE_0_ENVIRONMENT.md",
+    "receipts/phase-0.json"
+  ],
+  "actual_changed_files": [
+    "contracts/event.schema.json",
+    "contracts/evidence_envelope.schema.json",
+    "contracts/finding.schema.json",
+    "contracts/phase_receipt.schema.json",
+    "contracts/run_request.schema.json",
+    "contracts/scenario.schema.json",
+    "contracts/tool_surface.schema.json",
+    "contracts/trusted_projection.schema.json",
+    "docs/PHASE_0_ENVIRONMENT.md",
+    "locks/firecracker-v1.16.1-x86_64.json",
+    "locks/poisoned-tool-surface-v1.json",
+    "locks/runtime-versions.json",
+    "pyproject.toml",
+    "receipts/phase-0.json",
+    "scenarios/poisoned-tool-surface-v1.json",
+    "scenarios/poisoned-tool-surface-v1.tools.json",
+    "src/crumple_zone/__init__.py",
+    "src/crumple_zone/build_backend.py",
+    "src/crumple_zone/constants.py",
+    "src/crumple_zone/contracts.py",
+    "src/crumple_zone/guest_codex.py",
+    "src/crumple_zone/model_proxy.py",
+    "src/crumple_zone/model_proxy_http.py",
+    "tests/test_codex_proxy_seam.py",
+    "tests/test_contracts.py",
+    "tests/test_model_proxy.py"
+  ],
+  "assumptions": [
+    "The Operator-supplied current build map authorizes Stage 2 implementation despite the earlier planning-only workspace handoff text.",
+    "Host implementation uses Python 3.14 standard library only; no third-party Python dependency class is admitted.",
+    "The guest receives a short-lived CRUMPLE_RUN_CAPABILITY only; it never receives provider authentication.",
+    "The host live provider reads CRUMPLE_OPENAI_API_KEY only at call time from an Operator-controlled runtime environment or secret store.",
+    "The official Firecracker v1.16.1 x86-64 archive is the pinned VMM artifact for this target.",
+    "Hashes establish identity and integrity, not safety."
+  ],
+  "commands_executed": [
+    {
+      "command": "uname -srm; inspect /dev/kvm; inspect virtualization flags and KVM modules",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "Linux x86-64; virtualization CPU flag present; kvm and kvm_amd loaded; unrestricted /dev/kvm readable and writable."
+    },
+    {
+      "command": "codex --version; codex --help; codex exec --help; inspect official Codex custom-provider and exec documentation",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "codex-cli 0.144.4; exec supports ephemeral JSONL automation and strict config; custom providers support Responses wire API and bearer-token seams."
+    },
+    {
+      "command": "download official Firecracker v1.16.1 x86_64 archive and published checksum; sha256sum --check; internal SHA256SUMS verification; firecracker --version; jailer --version",
+      "working_directory": "/tmp",
+      "exit_code": 0,
+      "concise_output": "Archive checksum OK; all internal artifacts OK; Firecracker and Jailer v1.16.1."
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest discover -s tests -v",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "15 tests passed after one preserved bounded repair."
+    },
+    {
+      "command": "git diff --check; git status --short; SHA-256 scenario/tool surface; credential-literal scan",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "No whitespace errors, only declared untracked Phase 0 paths, scenario hashes match locks, no API-key-shaped literal found."
+    }
+  ],
+  "tests_and_falsifiers": [
+    {"test": "All eight JSON schema documents parse and positive fixtures validate", "exit_code": 0, "result": "PASS"},
+    {"test": "Unknown run-request fields including host paths are rejected", "exit_code": 0, "result": "PASS"},
+    {"test": "Out-of-enum authority and semantic authority promotion are rejected", "exit_code": 0, "result": "PASS"},
+    {"test": "Every hostile fixture string is absent from and cannot be inserted into the trusted projection limitation vocabulary", "exit_code": 0, "result": "PASS"},
+    {"test": "Guest-controlled semantic fields are rejected by trusted_projection.v1", "exit_code": 0, "result": "PASS"},
+    {"test": "Mock proxy enforces capability, endpoint, model, request count, request size, response size, and TTL", "exit_code": 0, "result": "PASS"},
+    {"test": "Arbitrary custom-provider destination is rejected by guest-codex.v1 invocation seam", "exit_code": 0, "result": "PASS"},
+    {"test": "Installed Codex executes ephemerally against mock Responses provider using only run capability", "exit_code": 0, "result": "PASS"},
+    {"test": "Live provider without Operator credential fails closed", "exit_code": 0, "result": "PASS"},
+    {"test": "LIVE_PROVIDER_CALL_NOT_RUN", "exit_code": 0, "result": "OPERATOR_CREDENTIAL_UNAVAILABLE"}
+  ],
+  "generated_artifacts": [
+    {"path": "contracts/run_request.schema.json", "sha256": "27e4a679fba07e86eda62745cbc2422a05e5053f4a2bb4198d8adf3446b0a5ef"},
+    {"path": "contracts/event.schema.json", "sha256": "f18df621f9a1b95bcc9978fe09cc85a59f1b5aeb81169ee7e2f9f04e544ba331"},
+    {"path": "contracts/finding.schema.json", "sha256": "3734fb4b2bde3f5a32232d5af5d542fc03436cec83f2550789f1e21b0b6b5e7b"},
+    {"path": "contracts/trusted_projection.schema.json", "sha256": "700c1657cec78d515c1f581123ab1163f2ed086b03643ab4c88806a4a2139b8b"},
+    {"path": "contracts/evidence_envelope.schema.json", "sha256": "ea7c08ccf1a4783b5f9598289f1e8c2b61846df483516f29baa4a4249068d6d6"},
+    {"path": "scenarios/poisoned-tool-surface-v1.json", "sha256": "fb324f68d6b14e4f4288c358b90c863c2a81f6e509353341c8c326c271110632"},
+    {"path": "scenarios/poisoned-tool-surface-v1.tools.json", "sha256": "f9927668c53f6b70010d4aa5fef0ce6e4faa2ffcadbf2747fc5ca66dab04dc04"},
+    {"path": "firecracker-v1.16.1-x86_64.tgz", "sha256": "382a02a869e4d6d5cb14c40577f9545e8458021ea8b0b2d3fc10ec14d9c242e6"}
+  ],
+  "invariants_exercised": [1, 2, 5, 6, 7, 8, 11, 12, 13],
+  "authority_claims": [
+    {"claim_code": "HOST_ENVIRONMENT_KVM_AVAILABLE", "authority": "HOST_ENFORCED"},
+    {"claim_code": "FIRECRACKER_ARTIFACT_HASH_VERIFIED", "authority": "HOST_ENFORCED"},
+    {"claim_code": "MODEL_PROXY_REQUEST_CROSSED_HOST", "authority": "HOST_MEDIATED"},
+    {"claim_code": "MODEL_PROXY_LIMITS_BLOCK_INVALID_REQUESTS", "authority": "HOST_ENFORCED"},
+    {"claim_code": "CODEX_JSON_EVENT_STREAM_EMITTED", "authority": "GUEST_REPORTED"},
+    {"claim_code": "LIVE_PROVIDER_CALL_NOT_RUN", "authority": "HOST_ENFORCED"}
+  ],
+  "limitations_and_checks_not_run": [
+    "LIVE_PROVIDER_CALL_NOT_RUN: OPERATOR_CREDENTIAL_UNAVAILABLE.",
+    "No reusable or placeholder provider credential was created, copied, stored, or used.",
+    "A Firecracker microVM was not booted in Phase 0; lifecycle execution belongs to Phase 1.",
+    "The Codex seam proof ran as a host process against loopback; guest transport is exercised in Phase 2.",
+    "No claim is made about general host observation of guest syscalls, filesystem reads, or hidden model state."
+  ],
+  "detected_drift": [
+    "Initial restricted execution context hid /dev/kvm although host KVM modules and CPU virtualization were present; the Operator changed the execution environment, after which /dev/kvm was directly verified. No product or trust-boundary change resulted."
+  ],
+  "repair_attempts": [
+    {
+      "attempt": 1,
+      "original_failure": "Installed Codex seam test exited 2 because codex exec 0.144.4 rejected --ask-for-approval in subcommand position.",
+      "allowed_scope": "tests/test_codex_proxy_seam.py only; preserve provider, auth, and trust boundaries.",
+      "repair": "Replaced the unsupported flag with strict config override approval_policy=\"never\".",
+      "retest_command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest tests.test_codex_proxy_seam -v",
+      "retest_exit_code": 0,
+      "retest_output": "2 seam tests passed after the configuration-seam extraction."
+    },
+    {
+      "attempt": 2,
+      "original_failure": "The completed Phase 0 receipt failed its own schema because the WORKTREE_UNCOMMITTED sentinel used uppercase letters outside A-F.",
+      "allowed_scope": "contracts/phase_receipt.schema.json and append-only repair history in receipts/phase-0.json.",
+      "repair": "Widened only the WORKTREE_ sentinel suffix to uppercase A-Z, digits, and underscore; committed SHA matching remains exactly 40 lowercase hexadecimal characters.",
+      "retest_command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -c validate_contract_phase_receipt",
+      "retest_exit_code": 0,
+      "retest_output": "Phase 0 receipt validates under phase-receipt.v1."
+    }
+  ],
+  "final_verdict": "REPAIRED_PASS",
+  "next_admitted_phase": "PHASE_1",
+  "stop_reason": ""
+}

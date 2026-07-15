@@ -1,0 +1,20 @@
+{
+  "artifact": "vmlinux-6.1.176",
+  "architecture": "x86_64",
+  "source_class": "OFFICIAL_FIRECRACKER_CI_ARTIFACT",
+  "ci_prefix": "firecracker-ci/20260715-1faca2f70e7a-0/x86_64",
+  "artifact_url": "https://s3.amazonaws.com/spec.ccfc.min/firecracker-ci/20260715-1faca2f70e7a-0/x86_64/vmlinux-6.1.176",
+  "sha256": "b20af7585283b051f16f6ece46e7064165054efe112c4ab0e26a06ff8ebe9da4",
+  "config_url": "https://s3.amazonaws.com/spec.ccfc.min/firecracker-ci/20260715-1faca2f70e7a-0/x86_64/vmlinux-6.1.176.config",
+  "config_sha256": "d15b2004a8a46054bc55faed515578419f46a0e973f5d62fb8400d030ea6fa1f",
+  "required_config_verified": [
+    "CONFIG_VIRTIO_VSOCKETS=y",
+    "CONFIG_VIRTIO_VSOCKETS_COMMON=y",
+    "CONFIG_VIRTIO_MMIO=y",
+    "CONFIG_EXT4_FS=y",
+    "CONFIG_DEVTMPFS=y",
+    "CONFIG_DEVTMPFS_MOUNT=y",
+    "CONFIG_TMPFS=y"
+  ],
+  "integrity_is_not_safety": true
+}

@@ -1,0 +1,174 @@
+{
+  "receipt_schema_version": "phase-receipt.v1",
+  "phase_id": "PHASE_2",
+  "objective": "Run an independent pinned Codex process inside a real single-use Firecracker chamber with a fresh non-persistent configuration, short-lived host-proxy capability, working host-mediated investigative tools, an observation-only prompt-injection skill, live fixed-schema host events, separate quarantined telemetry, and verified teardown.",
+  "started_at": "2026-07-15T04:20:08-05:00",
+  "completed_at": "2026-07-15T04:43:47-05:00",
+  "repository_commit_before": "e873d38c41935d8b24e54d8693c8c80d40e73c02",
+  "repository_commit_after": "WORKTREE_UNCOMMITTED",
+  "versions": {
+    "codex_chamber_interface": "codex-chamber.v1",
+    "codex_controller_interface": "codex-controller.v1",
+    "guest_protocol": "guest-codex.v1",
+    "model_proxy_interface": "model-proxy.v1",
+    "event_contract": "event.v1",
+    "codex_cli": "0.144.4",
+    "firecracker": "1.16.1",
+    "guest_kernel": "6.1.176",
+    "python": "3.14.6",
+    "gcc": "16.1.1",
+    "mke2fs": "1.47.4"
+  },
+  "declared_files": [
+    "guest/phase2_init.c",
+    "guest/http_vsock_forwarder.c",
+    "guest/mcp_vsock_proxy.c",
+    "guest/skills/prompt-injection-observer/",
+    "scripts/build-phase2-rootfs.sh",
+    "locks/phase2-guest-image.json",
+    "src/crumple_zone/trusted_events.py",
+    "src/crumple_zone/vsock_services.py",
+    "src/crumple_zone/codex_chamber.py",
+    "src/crumple_zone/codex_controller.py",
+    "tests/test_guest_codex_chamber.py",
+    "docs/PHASE_2_GUEST_CODEX.md",
+    "receipts/phase-2.json"
+  ],
+  "actual_changed_files": [
+    "docs/PHASE_2_GUEST_CODEX.md",
+    "guest/http_vsock_forwarder.c",
+    "guest/mcp_vsock_proxy.c",
+    "guest/phase2_init.c",
+    "guest/skills/prompt-injection-observer/SKILL.md",
+    "locks/phase2-guest-image.json",
+    "receipts/phase-2.json",
+    "scripts/build-phase2-rootfs.sh",
+    "src/crumple_zone/codex_chamber.py",
+    "src/crumple_zone/codex_controller.py",
+    "src/crumple_zone/trusted_events.py",
+    "src/crumple_zone/vsock_services.py",
+    "tests/test_guest_codex_chamber.py"
+  ],
+  "assumptions": [
+    "The deterministic mock Responses provider is the only admitted provider for Phase 2; no live credential or network provider call is available or required.",
+    "Codex 0.144.4 custom Responses-provider configuration proven in Phase 0 remains the installed interface used by the guest image.",
+    "The six MCP tools and their schemas are bounded by source-controlled scenario data; the strict outer request cannot select another command, destination, model, endpoint, path, or environment variable.",
+    "A fresh tmpfs CODEX_HOME and a fresh writable rootfs copy are sufficient for this single-use slice; no snapshot optimization is admitted.",
+    "Raw Codex and console bytes are untrusted quarantine artifacts and are never eligible for automatic trusted projection ingestion."
+  ],
+  "commands_executed": [
+    {
+      "command": "python compileall and warnings-as-errors C syntax checks",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "All new Python modules and three guest C helpers parsed without warnings or errors."
+    },
+    {
+      "command": "./scripts/build-phase2-rootfs.sh",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "Built a 512 MiB ext4 image with pinned Codex, bridges, skill, and static init; e2fsck clean."
+    },
+    {
+      "command": "real mock-backed guest Codex smoke attempt 1",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 1,
+      "concise_output": "Firecracker booted and tore down; quarantined stderr showed the unprivileged Codex process could not traverse the root-owned runtime parent."
+    },
+    {
+      "command": "real mock-backed guest Codex smoke attempt 2 after repair 1",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 1,
+      "concise_output": "Home isolation was correct; quarantined stderr showed the admitted MCP child and Codex runtime exhausted RLIMIT_NPROC 32; teardown passed."
+    },
+    {
+      "command": "real mock-backed guest Codex smoke attempt 3 after repair 2",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "Ready in 1025 ms; tool surface listed; one host-mock Responses request; Codex exit 0; no auth file reported; teardown true."
+    },
+    {
+      "command": "two consecutive ./scripts/build-phase2-rootfs.sh executions and SHA-256 comparison",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "Both final rootfs builds produced d7616a6795a7bf26ea8f6234199c10d08f6fd204506648ac6841280684658c4b."
+    },
+    {
+      "command": "retained Phase 2 proof run using CodexChamberRuntimeAdapter.from_repository",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "run_02ce1aa1a6d6dc5b ready in 974 ms; one model request; trace complete and untruncated; teardown verified."
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python -m unittest discover -s tests -v plus static, ext4, secret-pattern, empty-run, and diff checks",
+      "working_directory": "/home/ultra-o/Desktop/crumple-zone",
+      "exit_code": 0,
+      "concise_output": "22 tests passed in 13.663 seconds; shell/C/Python checks passed; ext4 clean; no run directories or key-shaped repository literals found."
+    }
+  ],
+  "tests_and_falsifiers": [
+    {"test": "Real Firecracker guest executes installed independent Codex 0.144.4 in ephemeral JSON mode", "exit_code": 0, "result": "PASS"},
+    {"test": "Required MCP server lists the six real mediated investigative tools before model completion", "exit_code": 0, "result": "PASS"},
+    {"test": "One model request crosses host proxy with provider-auth owner HOST_PROXY and guest authorization not forwarded", "exit_code": 0, "result": "PASS"},
+    {"test": "Live callback observes CHAMBER_READY and TOOL_SURFACE_PRESENTED while mutable run directory exists", "exit_code": 0, "result": "PASS"},
+    {"test": "Raw Codex JSONL, stderr, and VMM output are stored in separate quarantine artifacts", "exit_code": 0, "result": "PASS"},
+    {"test": "Every trusted event validates event.v1 and contains none of the hostile fixture strings", "exit_code": 0, "result": "PASS"},
+    {"test": "Invalid capability characters fail before Firecracker launch", "exit_code": 0, "result": "PASS"},
+    {"test": "Reusable image contains no auth.json at admitted credential locations", "exit_code": 0, "result": "PASS"},
+    {"test": "Final Phase 2 rootfs build is byte-deterministic and e2fsck clean", "exit_code": 0, "result": "PASS"},
+    {"test": "Codex reports no generated auth.json, exits 0, and VM/run sockets/writable state are destroyed", "exit_code": 0, "result": "PASS"},
+    {"test": "Complete Phase 0-2 regression suite", "exit_code": 0, "result": "22_PASS"}
+  ],
+  "generated_artifacts": [
+    {"path": ".crumple/cache/guest/crumple-phase2-init", "sha256": "e12376eab9ecb02ff4b38a546647f6900798e2037ae883d7d76666163c17b4b3"},
+    {"path": ".crumple/cache/guest/crumple-http-forwarder", "sha256": "8bec494a70fab1cf70965d3b6e777de32e46203137aa0bfcc45e27c5b74bdc9d"},
+    {"path": ".crumple/cache/guest/crumple-mcp-proxy", "sha256": "ee7c94159213ea4078934fa45a5f40b5df1647b3d648a9bc33e6db4add2e8ce1"},
+    {"path": ".crumple/cache/guest/rootfs-phase2.ext4", "sha256": "d7616a6795a7bf26ea8f6234199c10d08f6fd204506648ac6841280684658c4b"},
+    {"path": "guest/skills/prompt-injection-observer/SKILL.md", "sha256": "a6d4bdd244c3883335c5b4f60cfe0656cabf63ea41c8ba404322ba465d8e2064"},
+    {"path": ".crumple/evidence/run_02ce1aa1a6d6dc5b/quarantine/codex.jsonl", "sha256": "fb8036ea7d744822e0de11acc1e7acb8c835304dbf7b6530932f936d510c19b2"},
+    {"path": ".crumple/evidence/run_02ce1aa1a6d6dc5b/quarantine/codex.stderr", "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+    {"path": ".crumple/evidence/run_02ce1aa1a6d6dc5b/quarantine/firecracker.log", "sha256": "415d360c427b4fb44d9611fcb64cd158b2a17ecbfea1777ce22a29f80031f0d2"}
+  ],
+  "invariants_exercised": [1, 2, 3, 5, 6, 7, 8, 9, 10, 14, 15],
+  "authority_claims": [
+    {"claim_code": "FRESH_RUN_CAPABILITY_ISSUED_AND_REVOKED", "authority": "HOST_ENFORCED"},
+    {"claim_code": "NO_PROVIDER_CREDENTIAL_SUPPLIED_TO_GUEST", "authority": "HOST_ENFORCED"},
+    {"claim_code": "MODEL_REQUEST_CROSSED_HOST_PROXY", "authority": "HOST_MEDIATED"},
+    {"claim_code": "TOOL_SURFACE_PRESENTED_BY_HOST_MEDIATOR", "authority": "HOST_MEDIATED"},
+    {"claim_code": "CODEX_STRUCTURED_STREAM_CAPTURED", "authority": "GUEST_REPORTED"},
+    {"claim_code": "GUEST_REPORTED_NO_AUTH_FILE", "authority": "GUEST_REPORTED"},
+    {"claim_code": "QUARANTINE_NOT_PROJECTED", "authority": "HOST_ENFORCED"},
+    {"claim_code": "FIRECRACKER_AND_MUTABLE_NAMESPACE_DESTROYED", "authority": "HOST_ENFORCED"}
+  ],
+  "limitations_and_checks_not_run": [
+    "LIVE_PROVIDER_CALL_NOT_RUN: OPERATOR_CREDENTIAL_UNAVAILABLE. No live OpenAI request was attempted and no credential was created, copied, stored, logged, or placed in the guest.",
+    "The deterministic mock completion proves routing and lifecycle infrastructure, not model behavior against the hostile result.",
+    "The Phase 2 baseline initializes and exposes the hostile-capable surface but intentionally does not exercise package_lookup or diagnostic_export; those paths are Phase 3.",
+    "The prompt-injection observation skill is an investigative aid only; the baseline does not establish that a model read, followed, resisted, or correctly classified it.",
+    "The no-auth-file runtime value is GUEST_REPORTED; the separate host-enforced claim is limited to the image contents and assignment bytes supplied by the controller.",
+    "No general guest filesystem-read, syscall, shell-command, process, or model-reasoning observation is claimed.",
+    "Direct Firecracker execution remains without jailer/cgroup production hardening as disclosed in Phase 1."
+  ],
+  "detected_drift": [],
+  "repair_attempts": [
+    {
+      "attempt": 1,
+      "original_failure": "The first real guest Codex run could not traverse the root-owned /run/crumple parent to its correctly owned fresh CODEX_HOME.",
+      "allowed_scope": "Guest bootstrap permissions within Phase 2; no channel, dependency, architecture, or authority change.",
+      "repair": "Changed only the ephemeral parent directory from owner-only 0700 to root-owned traverse-only 0711; Codex home remained uid 1000 mode 0700.",
+      "retest_exit_code": 1,
+      "retest_output": "Home access succeeded; the next bounded limit falsifier showed RLIMIT_NPROC 32 prevented required MCP and runtime threads. Teardown remained verified."
+    },
+    {
+      "attempt": 2,
+      "original_failure": "Codex and its required MCP child exhausted the guest RLIMIT_NPROC ceiling of 32 during initialization.",
+      "allowed_scope": "Already admitted bounded Phase 2 process/file limits; host Phase 2 process allowance was 128.",
+      "repair": "Raised guest RLIMIT_NPROC and RLIMIT_NOFILE to the existing admitted bound of 128 without changing CPU, memory, output, wall, endpoint, model, tool, or communication limits.",
+      "retest_exit_code": 0,
+      "retest_output": "Real guest Codex baseline passed; the final 22-test suite and all negative/static checks passed."
+    }
+  ],
+  "final_verdict": "REPAIRED_PASS",
+  "next_admitted_phase": "PHASE_3",
+  "stop_reason": ""
+}
