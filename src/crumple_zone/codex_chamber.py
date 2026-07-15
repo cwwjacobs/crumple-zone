@@ -22,6 +22,7 @@ from .firecracker_runtime import (
     _api_put,
     _apply_process_limits,
     _current_uid_task_count,
+    _force_kill_process,
     _pid_exists,
     _read_line,
     _send_line,
@@ -31,13 +32,19 @@ from .firecracker_runtime import (
     _wait_for_socket,
 )
 from .model_proxy import HostModelProxy
+from .scenario_binding import (
+    ScenarioBinding,
+    load_scenario_binding,
+    runtime_manifest,
+    runtime_manifest_hash,
+)
 from .trusted_events import TrustedTimeline
 from .vsock_services import HostToolMediator, ModelVsockService, ServiceError, TraceVsockService
 
 
 CODEX_CHAMBER_INTERFACE_VERSION = "codex-chamber.v1"
 CODEX_GUEST_PROTOCOL_VERSION = "guest-codex.v1"
-EXPECTED_PHASE2_ROOTFS_SHA256 = "d7616a6795a7bf26ea8f6234199c10d08f6fd204506648ac6841280684658c4b"
+EXPECTED_PHASE2_ROOTFS_SHA256 = "c66ff0975fc24950b4a372bc1644763a09bff726f021927340f01da92e2fbee4"
 LIFECYCLE_PORT = 5000
 
 
@@ -47,6 +54,10 @@ class CodexAssignment:
     canary: str
     capability: str
     policy_id: str
+    task: str
+    scenario_hash: str
+    tool_surface_hash: str
+    runtime_manifest_hash: str
     task_mode: str = "baseline"
 
 
@@ -54,9 +65,12 @@ class CodexAssignment:
 class CodexChamberResult:
     interface_version: str
     run_id: str
+    run_status: str
+    failure_code: str
     canary_digest: str
     challenge_digest: str
     ready_milliseconds: int
+    ready_limit_milliseconds: int
     codex_exit_code: int
     guest_auth_file_reported: bool
     tool_surface_presented: bool
@@ -76,6 +90,10 @@ class CodexChamberResult:
     run_directory_gone: bool
     sockets_gone: bool
     teardown_verified: bool
+    scenario_hash: str
+    tool_surface_hash: str
+    runtime_manifest_hash: str
+    runtime_manifest: dict
     events: tuple[dict, ...]
 
 
@@ -102,6 +120,8 @@ class CodexChamberRuntimeAdapter:
         self.expected_rootfs_sha256 = expected_rootfs_sha256
         self.guest_init = guest_init
         self.last_process_pid: int | None = None
+        self._scenario_binding: ScenarioBinding | None = None
+        self._runtime_manifest: dict | None = None
         self._validate_artifacts()
 
     @classmethod
@@ -120,17 +140,30 @@ class CodexChamberRuntimeAdapter:
     @classmethod
     def for_hostile_scenario(cls, repository: Path, rootfs_sha256: str) -> "CodexChamberRuntimeAdapter":
         root = repository.resolve()
-        cache = root / ".crumple/cache"
+        return cls.for_hostile_layout(root, root / ".crumple", rootfs_sha256)
+
+    @classmethod
+    def for_hostile_layout(cls, resource_root: Path, state_root: Path, rootfs_sha256: str) -> "CodexChamberRuntimeAdapter":
+        root = resource_root.resolve()
+        state = state_root.resolve()
+        cache = state / "cache"
         return cls(
             root,
             cache / "firecracker/v1.16.1/firecracker-v1.16.1-x86_64",
             cache / "kernel/6.1.176/vmlinux-6.1.176",
             cache / "guest/rootfs-phase3.ext4",
-            root / ".crumple/runs",
-            root / ".crumple/evidence",
+            state / "runs",
+            state / "evidence",
             rootfs_sha256,
             "/sbin/crumple-phase3-init",
         )
+
+    def bind_scenario(self, binding: ScenarioBinding) -> tuple[dict, str]:
+        manifest = runtime_manifest(binding, rootfs_sha256=self.expected_rootfs_sha256, guest_init=self.guest_init)
+        digest = runtime_manifest_hash(manifest)
+        self._scenario_binding = binding
+        self._runtime_manifest = manifest
+        return manifest, digest
 
     def run_once(
         self,
@@ -141,6 +174,16 @@ class CodexChamberRuntimeAdapter:
     ) -> CodexChamberResult:
         _validate_codex_assignment(assignment)
         _validate_limits(limits)
+        if self._scenario_binding is None or self._runtime_manifest is None:
+            raise LifecycleError("SCENARIO_NOT_BOUND")
+        binding = self._scenario_binding
+        manifest = self._runtime_manifest
+        if (
+            assignment.scenario_hash != binding.scenario_hash
+            or assignment.tool_surface_hash != binding.tool_surface_hash
+            or assignment.runtime_manifest_hash != runtime_manifest_hash(manifest)
+        ):
+            raise LifecycleError("RUNTIME_MANIFEST_BINDING_MISMATCH")
         self.runtime_root.mkdir(parents=True, exist_ok=True)
         self.evidence_root.mkdir(parents=True, exist_ok=True)
         run_directory = self.runtime_root / assignment.run_id
@@ -161,7 +204,7 @@ class CodexChamberRuntimeAdapter:
         quarantined_log = evidence_directory / "firecracker.log"
 
         model_service = ModelVsockService(model_socket, proxy, timeline, assignment.canary)
-        tool_service = HostToolMediator(mcp_socket, self.repository, timeline, assignment.policy_id, assignment.canary)
+        tool_service = HostToolMediator(mcp_socket, self.repository, timeline, assignment.policy_id, assignment.canary, binding=binding)
         trace_service = TraceVsockService(trace_socket, evidence_directory, timeline, limits.output_bytes)
         services = (model_service, tool_service, trace_service)
         listener: socket.socket | None = None
@@ -183,6 +226,8 @@ class CodexChamberRuntimeAdapter:
         cleanup_error: BaseException | None = None
 
         try:
+            for retained in (quarantined_log, trace_service.jsonl_path, trace_service.stderr_path):
+                retained.touch(mode=0o600, exist_ok=False)
             shutil.copyfile(self.base_rootfs, rootfs)
             listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             listener.bind(str(lifecycle_socket))
@@ -225,7 +270,11 @@ class CodexChamberRuntimeAdapter:
                 timeline.emit("CHAMBER_READY", "HOST_ENFORCED", "FIRECRACKER_RUNTIME")
                 _send_line(
                     channel,
-                    f"ASSIGN2 {assignment.run_id} {assignment.canary} {assignment.capability} {assignment.task_mode}",
+                    " ".join((
+                        "ASSIGN2", assignment.run_id, assignment.canary, assignment.capability,
+                        assignment.task_mode, assignment.scenario_hash, assignment.runtime_manifest_hash,
+                        assignment.task.encode("ascii").hex(),
+                    )),
                 )
                 if _read_line(channel) != f"ASSIGNED2 {assignment.run_id}":
                     raise LifecycleError("ASSIGNMENT_ACK_INVALID")
@@ -257,9 +306,19 @@ class CodexChamberRuntimeAdapter:
             original_error = error
         finally:
             if listener is not None:
-                listener.close()
+                try:
+                    listener.close()
+                except BaseException as error:
+                    cleanup_error = cleanup_error or error
             if process is not None and process.poll() is None:
-                _stop_process(process)
+                try:
+                    _stop_process(process)
+                except BaseException as error:
+                    cleanup_error = cleanup_error or error
+                    try:
+                        _force_kill_process(process)
+                    except BaseException as force_error:
+                        cleanup_error = cleanup_error or force_error
             if process is not None:
                 firecracker_exit_code = process.poll() if process.poll() is not None else -1
             if capture is not None:
@@ -268,7 +327,10 @@ class CodexChamberRuntimeAdapter:
                 except BaseException as error:
                     cleanup_error = cleanup_error or error
             if process is not None and process.stdout is not None:
-                process.stdout.close()
+                try:
+                    process.stdout.close()
+                except BaseException as error:
+                    cleanup_error = cleanup_error or error
             for service in reversed(services):
                 try:
                     service.stop()
@@ -277,6 +339,11 @@ class CodexChamberRuntimeAdapter:
             process_gone = pid < 0 or not _pid_exists(pid)
             if process_gone:
                 timeline.emit("CHAMBER_STOPPED", "HOST_ENFORCED", "FIRECRACKER_RUNTIME")
+            for path in reversed(socket_paths):
+                try:
+                    path.unlink(missing_ok=True)
+                except BaseException as error:
+                    cleanup_error = cleanup_error or error
             try:
                 shutil.rmtree(run_directory, ignore_errors=False)
             except BaseException as error:
@@ -287,28 +354,25 @@ class CodexChamberRuntimeAdapter:
             if teardown_verified:
                 timeline.emit("TEARDOWN_VERIFIED", "HOST_ENFORCED", "FIRECRACKER_RUNTIME")
 
+        if timeline.callback_failed and original_error is None:
+            original_error = LifecycleError("EVENT_CALLBACK_FAILED")
         success = original_error is None and cleanup_error is None and teardown_verified
-        timeline.emit("RUN_COMPLETED" if success else "RUN_FAILED", "HOST_ENFORCED", "CONTROLLER")
-        if original_error is not None:
-            if isinstance(original_error, (LifecycleError, ServiceError)):
-                raise LifecycleError(str(original_error)) from original_error
-            if isinstance(original_error, socket.timeout):
-                raise LifecycleError("WALL_CLOCK_LIMIT_EXCEEDED") from original_error
-            raise LifecycleError("CODEX_CHAMBER_FAILED") from original_error
-        if cleanup_error is not None:
-            if isinstance(cleanup_error, (LifecycleError, ServiceError)):
-                raise LifecycleError(str(cleanup_error)) from cleanup_error
-            raise LifecycleError("CODEX_CHAMBER_CLEANUP_FAILED") from cleanup_error
-        if not teardown_verified:
-            raise LifecycleError("TEARDOWN_VERIFICATION_FAILED")
+        failure_code = "NONE" if success else _failure_code(original_error, cleanup_error, teardown_verified)
+        timeline.emit(
+            "RUN_COMPLETED" if success else "RUN_FAILED", "HOST_ENFORCED", "CONTROLLER",
+            decision="NONE" if success else "FAIL_CLOSED",
+        )
 
         firecracker_log_hash = _hash_or_zero(quarantined_log)
         return CodexChamberResult(
             interface_version=CODEX_CHAMBER_INTERFACE_VERSION,
             run_id=assignment.run_id,
+            run_status="COMPLETED" if success else "RUN_FAILED",
+            failure_code=failure_code,
             canary_digest=_digest_text(assignment.canary),
             challenge_digest=_digest_text(challenge),
             ready_milliseconds=ready_milliseconds,
+            ready_limit_milliseconds=limits.wall_seconds * 1000,
             codex_exit_code=codex_exit_code,
             guest_auth_file_reported=guest_auth_file_reported,
             tool_surface_presented=tool_service.surface_presented,
@@ -328,6 +392,10 @@ class CodexChamberRuntimeAdapter:
             run_directory_gone=run_directory_gone,
             sockets_gone=sockets_gone,
             teardown_verified=teardown_verified,
+            scenario_hash=assignment.scenario_hash,
+            tool_surface_hash=assignment.tool_surface_hash,
+            runtime_manifest_hash=assignment.runtime_manifest_hash,
+            runtime_manifest=manifest,
             events=timeline.snapshot(),
         )
 
@@ -381,6 +449,11 @@ def _validate_codex_assignment(assignment: CodexAssignment) -> None:
         raise LifecycleError("CAPABILITY_INVALID")
     if assignment.policy_id not in {"observe-v1", "capability-bound-v1"}:
         raise LifecycleError("POLICY_INVALID")
+    if not 1 <= len(assignment.task.encode("ascii", errors="ignore")) <= 512 or not assignment.task.isascii() or not assignment.task.isprintable():
+        raise LifecycleError("TASK_INVALID")
+    for digest in (assignment.scenario_hash, assignment.tool_surface_hash, assignment.runtime_manifest_hash):
+        if re.fullmatch(r"[a-f0-9]{64}", digest) is None:
+            raise LifecycleError("RUNTIME_BINDING_HASH_INVALID")
     if assignment.task_mode not in {"baseline", "hostile"}:
         raise LifecycleError("TASK_MODE_INVALID")
 
@@ -398,3 +471,16 @@ def _digest_text(value: str) -> str:
 
 def _hash_or_zero(path: Path) -> str:
     return _sha256_file(path) if path.exists() else "0" * 64
+
+
+def _failure_code(original: BaseException | None, cleanup: BaseException | None, teardown: bool) -> str:
+    if not teardown:
+        return "TEARDOWN_VERIFICATION_FAILED"
+    error = original or cleanup
+    if isinstance(error, (LifecycleError, ServiceError)):
+        return str(error)
+    if isinstance(error, socket.timeout):
+        return "WALL_CLOCK_LIMIT_EXCEEDED"
+    if cleanup is not None:
+        return "CODEX_CHAMBER_CLEANUP_FAILED"
+    return "CODEX_CHAMBER_FAILED"

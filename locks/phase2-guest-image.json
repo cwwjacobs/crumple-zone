@@ -8,7 +8,7 @@
   "runtime_interface": "codex-chamber.v1",
   "controller_interface": "codex-controller.v1",
   "init_source": "guest/phase2_init.c",
-  "init_binary_sha256": "e12376eab9ecb02ff4b38a546647f6900798e2037ae883d7d76666163c17b4b3",
+  "init_binary_sha256": "37b2d8eeba400079d1fab16ace715b523ab1219f164439d3a388639622bd4bab",
   "http_vsock_forwarder_sha256": "8bec494a70fab1cf70965d3b6e777de32e46203137aa0bfcc45e27c5b74bdc9d",
   "mcp_vsock_proxy_sha256": "ee7c94159213ea4078934fa45a5f40b5df1647b3d648a9bc33e6db4add2e8ce1",
   "codex_cli_version": "0.144.4",
@@ -16,7 +16,7 @@
   "codex_bwrap_sha256": "77360cbde9767204748eb9781ce2ad11dc20e5d57e5d79adaf3b20c34a6f368e",
   "codex_rg_sha256": "ebeaf56fd4e8a749e6077c30b3e3796ca66c210bdedfa61b09f0e1ac8288b418",
   "rootfs_artifact": ".crumple/cache/guest/rootfs-phase2.ext4",
-  "rootfs_sha256": "d7616a6795a7bf26ea8f6234199c10d08f6fd204506648ac6841280684658c4b",
+  "rootfs_sha256": "c66ff0975fc24950b4a372bc1644763a09bff726f021927340f01da92e2fbee4",
   "filesystem_uuid": "6372756d-706c-6500-0000-000000000002",
   "filesystem_bytes": 536870912,
   "source_date_epoch": 1784091600,
@@ -24,6 +24,8 @@
   "contains_run_identity": false,
   "contains_canary": false,
   "contains_user_data": false,
+  "contains_task": false,
+  "task_delivery": "POST_READY_NONCE_BOUND_ASSIGNMENT_TO_RUN_TMPFS",
   "fresh_codex_home_is_tmpfs_per_boot": true,
   "integrity_is_not_safety": true
 }

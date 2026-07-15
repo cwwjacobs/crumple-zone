@@ -26,6 +26,8 @@ class _ProxyHandler(BaseHTTPRequestHandler):
                 raise ProxyRejection("CAPABILITY_INVALID")
             token = authorization.removeprefix("Bearer ")
             body = self.rfile.read(length)
+            if len(body) != length:
+                raise ProxyRejection("REQUEST_HTTP_PREMATURE_EOF")
             response = proxy.handle(self.path, token, body)
             self.send_response(response.status)
             self.send_header("Content-Type", response.content_type)
@@ -65,4 +67,3 @@ def running_proxy(proxy: HostModelProxy, host: str = "127.0.0.1") -> Iterator[Pr
         server.shutdown()
         server.server_close()
         thread.join(timeout=5)
-

@@ -8,7 +8,7 @@ from .contracts import validate_contract
 from .evidence import EvidenceError, canonical_bytes, verify_envelope
 
 
-def project_trusted_result(envelope: dict, teardown_verified: bool) -> dict:
+def project_trusted_result(envelope: dict) -> dict:
     verify_envelope(envelope)
     findings = envelope["findings"]
     violation = any(
@@ -16,7 +16,7 @@ def project_trusted_result(envelope: dict, teardown_verified: bool) -> dict:
         and finding["status"] == "OBSERVED"
         for finding in findings
     )
-    if envelope["checks"]["failed"]:
+    if envelope["run_status"] == "RUN_FAILED" or envelope["checks"]["failed"]:
         verdict = "RUN_FAILED"
     elif violation:
         verdict = "VIOLATION_OBSERVED"
@@ -33,8 +33,11 @@ def project_trusted_result(envelope: dict, teardown_verified: bool) -> dict:
     projection = {
         "schema_version": "trusted-projection.v1",
         "run_id": envelope["run_id"],
+        "run_status": envelope["run_status"],
+        "failure_code": envelope["failure_code"],
         "scenario_id": envelope["scenario_id"],
         "scenario_hash": envelope["scenario_hash"],
+        "runtime_manifest_hash": envelope["runtime_manifest_hash"],
         "policy_id": envelope["policy_id"],
         "verdict": verdict,
         "findings": [finding["finding_id"] for finding in findings],
@@ -45,14 +48,27 @@ def project_trusted_result(envelope: dict, teardown_verified: bool) -> dict:
         "authority_sources": [authority for authority in authority_order if authority in present_authorities],
         "limitations": limitations,
         "envelope_hash": envelope["envelope_hash"],
-        "teardown_verified": teardown_verified,
+        "time_to_ready_ms": envelope["time_to_ready_ms"],
+        "time_to_ready_limit_ms": envelope["time_to_ready_limit_ms"],
+        "teardown_verified": any(
+            event["code"] == "TEARDOWN_VERIFIED"
+            and event["authority"] == "HOST_ENFORCED"
+            and event["component"] == "FIRECRACKER_RUNTIME"
+            for event in envelope["events"]
+        ),
     }
     validate_contract("trusted_projection", projection)
     return projection
 
 
-def write_trusted_projection(projection: dict, evidence_root: Path) -> Path:
+def verify_projection(projection: dict, envelope: dict) -> None:
     validate_contract("trusted_projection", projection)
+    if projection != project_trusted_result(envelope):
+        raise EvidenceError("TRUSTED_PROJECTION_ENVELOPE_MISMATCH")
+
+
+def write_trusted_projection(projection: dict, envelope: dict, evidence_root: Path) -> Path:
+    verify_projection(projection, envelope)
     destination = evidence_root.resolve() / projection["run_id"] / "trusted-result.json"
     destination.parent.mkdir(parents=True, exist_ok=True)
     if destination.exists():

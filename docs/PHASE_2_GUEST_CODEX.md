@@ -2,18 +2,19 @@
 
 ## Runtime boundary
 
-`codex-controller.v1` validates `run-request.v1`, chooses a fresh run ID and fake canary, issues a short-lived run capability, and invokes `codex-chamber.v1`. The guest receives the capability only after the nonce handshake and assignment. It never receives provider authentication.
+`codex-controller.v1` validates and raw-hash-binds the scenario/tool contracts, chooses a fresh run ID and fake canary, issues a short-lived run capability, and invokes `codex-chamber.v1`. The reusable image contains no bounded task. The guest reports nonce-bound `READY` before the host sends the task and runtime-manifest hash; the task is retained only under the run's tmpfs. The guest never receives provider authentication.
 
 The Phase 2 image pins the installed Codex CLI 0.144.4 native binary and runs:
 
 - `codex exec --ephemeral --json --ignore-user-config --ignore-rules --strict-config`;
 - a fresh tmpfs-backed `CODEX_HOME` created on each boot;
 - no history persistence and no saved `auth.json`;
+- built-in web search disabled;
 - a Responses-compatible provider at guest loopback only;
 - a required stdio MCP server whose bytes are forwarded over vsock to the host mediator;
 - read-only Codex sandbox selection, a 128-task guest ceiling, bounded file/output/CPU/wall limits, and a single-use writable rootfs copy.
 
-The host model service accepts only `/v1/responses`, the pinned model, the run capability, and the configured request/response/count/TTL bounds. The Phase 2 test provider is deterministic and owns no credential. The live provider is not invoked.
+The host model service accepts only `/v1/responses`, the pinned model, the run capability, and the closed `responses-request.v1` request shape plus configured request/response/count/TTL bounds. Persistence, provider-hosted tools, remote MCP destinations, and unknown authority-bearing fields fail closed. The Phase 2 test provider is deterministic and owns no credential. The live provider is not invoked.
 
 ## Data paths
 

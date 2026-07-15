@@ -1,15 +1,15 @@
 {
   "schema_version": "build-receipt.v1",
   "target_id": "BUILD_TARGET_1",
-  "completed_at": "2026-07-15T05:30:52-05:00",
+  "completed_at": "2026-07-15T08:04:42-05:00",
   "build_status": "REPAIRED_PASS",
   "bounded_model_verdict": "INCONCLUSIVE",
   "build_lock": {
     "path": "locks/build-target-1.json",
-    "sha256": "eaeda450f3249ad2c322029444f269b4d65cc12d48811c156f9aabcd53893c98"
+    "sha256": "3ad65142ccfe76725679fe919cd2b750706140e5b73547c93a7e33712113e6c1"
   },
   "phase_receipts": [
-    {"phase_id": "PHASE_0", "verdict": "REPAIRED_PASS", "sha256": "9308a938cd0d96ba49ad84097a2145a6a7195ba87de2745c107a96cb727443ce"},
+    {"phase_id": "PHASE_0", "verdict": "REPAIRED_PASS", "sha256": "8800f4e57a088082df508003b422622f3477081772b05f1f039659e8de580eb6"},
     {"phase_id": "PHASE_1", "verdict": "REPAIRED_PASS", "sha256": "4de542513e43e1e2b621300c48bfeed43c52dda40a07c3ad33ae8cd1bf83bdc5"},
     {"phase_id": "PHASE_2", "verdict": "REPAIRED_PASS", "sha256": "bcb3c00af9be3f5d89925e04baab6298af3b11a81a9ec5ead98d0e9937e4276e"},
     {"phase_id": "PHASE_3", "verdict": "REPAIRED_PASS", "sha256": "f70a7def8748c2e509cd54711ee312aa515dc045d0278f7b03f898d30babcbff"},
@@ -49,8 +49,12 @@
     "POLICY_REPLAY_REPEATABILITY",
     "FRESH_SCENARIO_RERUN",
     "INSTALLED_CLI_SMOKE",
-    "COMPLETE_35_TEST_REGRESSION",
+    "COMPLETE_52_TEST_REGRESSION",
     "TEARDOWN_ORPHAN_SCAN",
+    "TEARDOWN_POSTCONDITION_VERIFICATION",
+    "STRICT_RETAINED_ARTIFACT_REHASH",
+    "FINAL_BUILD_RECEIPT_VERIFICATION",
+    "SOURCE_COMMIT_TREE_IDENTITY_VERIFICATION",
     "RECEIPT_CHAIN_HASH_LOCK"
   ],
   "checks_not_executed": [
@@ -60,8 +64,8 @@
   ],
   "failed_checks": [],
   "retained_evidence_refs": [
-    "run_1a01aab7d9a4b0eb",
-    "run_18146351e03dab0d",
+    "run_315196d159351337",
+    "run_7db0fccaf4908ce0",
     "locks/build-target-1.json",
     "receipts/phase-0.json",
     "receipts/phase-1.json",

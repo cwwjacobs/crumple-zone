@@ -3,20 +3,21 @@
   "$id": "urn:crumple:contract:event:v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "event_id", "run_id", "sequence", "monotonic_ns", "code", "authority", "component", "scenario_id", "policy_id", "tool_id", "decision", "argument_projection", "artifact_ref"],
+  "required": ["schema_version", "event_id", "run_id", "sequence", "monotonic_ns", "code", "authority", "component", "scenario_id", "policy_id", "tool_id", "decision", "action_id", "argument_projection", "result_projection", "artifact_ref"],
   "properties": {
     "schema_version": {"const": "event.v1"},
     "event_id": {"type": "string", "pattern": "evt_[a-f0-9]{16}"},
     "run_id": {"type": "string", "pattern": "run_[a-z0-9_]{8,64}"},
     "sequence": {"type": "integer", "minimum": 0, "maximum": 100000},
     "monotonic_ns": {"type": "integer", "minimum": 0},
-    "code": {"enum": ["RUN_ACCEPTED", "CAPABILITY_ISSUED", "MODEL_PROXY_REQUEST_ACCEPTED", "MODEL_PROXY_REQUEST_REJECTED", "MODEL_PROXY_BUDGET_EXHAUSTED", "MODEL_PROXY_CAPABILITY_EXPIRED", "MODEL_PROXY_RESPONSE_ACCEPTED", "LIVE_PROVIDER_CALL_NOT_RUN", "TOOL_SURFACE_PRESENTED", "TOOL_CALL_OBSERVED", "TOOL_CALL_BLOCKED", "SINKHOLE_RECEIVED", "GUEST_EVENT_REPORTED", "AGENT_OBSERVATION_REPORTED", "CHAMBER_READY", "CHAMBER_STOPPED", "TEARDOWN_VERIFIED", "RUN_COMPLETED", "RUN_FAILED"]},
+    "code": {"enum": ["RUN_ACCEPTED", "SCENARIO_BOUND", "CAPABILITY_ISSUED", "MODEL_PROXY_REQUEST_ACCEPTED", "MODEL_PROXY_REQUEST_REJECTED", "MODEL_PROXY_BUDGET_EXHAUSTED", "MODEL_PROXY_CAPABILITY_EXPIRED", "MODEL_PROXY_RESPONSE_ACCEPTED", "LIVE_PROVIDER_CALL_NOT_RUN", "TOOL_SURFACE_PRESENTED", "TOOL_CALL_OBSERVED", "TOOL_CALL_BLOCKED", "TOOL_RESULT_RECORDED", "SINKHOLE_RECEIVED", "GUEST_EVENT_REPORTED", "AGENT_OBSERVATION_REPORTED", "CHAMBER_READY", "CHAMBER_STOPPED", "TEARDOWN_VERIFIED", "RUN_COMPLETED", "RUN_FAILED"]},
     "authority": {"enum": ["HOST_ENFORCED", "HOST_MEDIATED", "GUEST_REPORTED", "AGENT_INTERPRETED"]},
     "component": {"enum": ["CONTROLLER", "FIRECRACKER_RUNTIME", "MODEL_PROXY", "TOOL_MEDIATOR", "SINKHOLE", "GUEST_CODEX", "GUEST_SENSOR", "POLICY_ENGINE", "EVIDENCE_ASSEMBLER"]},
     "scenario_id": {"enum": ["poisoned-tool-surface-v1"]},
     "policy_id": {"enum": ["observe-v1", "capability-bound-v1"]},
-    "tool_id": {"enum": ["NONE", "package_lookup", "diagnostic_export"]},
+    "tool_id": {"enum": ["NONE", "inspect_tool_surface", "inspect_fake_data", "package_lookup", "diagnostic_export", "record_injection_observation", "complete_synthetic_task"]},
     "decision": {"enum": ["NONE", "ALLOW", "OBSERVE", "BLOCK", "FAIL_CLOSED"]},
+    "action_id": {"type": "string", "pattern": "(NONE|act_[a-f0-9]{16})"},
     "argument_projection": {
       "type": "object", "additionalProperties": false,
       "required": ["canary_present", "payload_bytes", "argument_hash"],
@@ -24,6 +25,16 @@
         "canary_present": {"type": "boolean"},
         "payload_bytes": {"type": "integer", "minimum": 0, "maximum": 10485760},
         "argument_hash": {"type": "string", "pattern": "[a-f0-9]{64}"}
+      }
+    },
+    "result_projection": {
+      "type": "object", "additionalProperties": false,
+      "required": ["present", "payload_bytes", "result_hash", "is_error"],
+      "properties": {
+        "present": {"type": "boolean"},
+        "payload_bytes": {"type": "integer", "minimum": 0, "maximum": 10485760},
+        "result_hash": {"type": "string", "pattern": "[a-f0-9]{64}"},
+        "is_error": {"type": "boolean"}
       }
     },
     "artifact_ref": {"type": "string", "pattern": "(NONE|art_[a-f0-9]{16})"}

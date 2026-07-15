@@ -32,14 +32,14 @@ Host mediators/runtime
 
 ## Component ownership
 
-- CLI: parsing and fixed-code rendering only; no arbitrary host paths, commands, VM arguments, destinations, models, or environment variables.
+- CLI: parsing and fixed-code rendering only; production contracts/scenarios/locks resolve from a validated package/install resource root, not an exported repository variable.
 - Controller: validates the request, assigns fresh state, issues/revokes the run capability, and selects fixed limits.
 - Firecracker adapter: validates pinned artifacts, owns the per-run VMM/rootfs/socket namespace, enforces wall/process/output limits, and proves teardown.
-- Guest bootstrap: creates tmpfs Codex home, installs the observation skill, injects fake data after assignment, runs Codex unprivileged, and frames raw telemetry.
-- Model proxy: owns provider authentication and enforces endpoint/model/request/size/TTL bounds. The guest sees only its run capability.
+- Guest bootstrap: creates tmpfs Codex home, receives the bounded task only after nonce-bound readiness, retains it in tmpfs, installs the observation skill, injects fake data after assignment, runs Codex unprivileged, and frames raw telemetry.
+- Model proxy: owns provider authentication and enforces the closed versioned Responses request shape plus endpoint/model/request/size/TTL bounds. The guest sees only its run capability.
 - Tool mediator: supplies the exact tool surface, validates calls, hashes projections, and routes effects through host policy.
 - Canary manager and sinkhole: create fresh fake canaries and provide named exact-byte tripwires with no external destination.
-- Evidence/projector: canonicalize events, bind hashes/artifacts/findings, and emit schema-limited machine results.
+- Evidence/projector: rehash retained artifacts, recompute findings/checks from exact host-event predicates, cross-verify projections, and emit schema-limited machine results.
 - Trace store: permits raw reads only after explicit operator-only selection.
 - Replay/rerun: keep deterministic policy evaluation separate from fresh execution.
 

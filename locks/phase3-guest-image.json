@@ -8,13 +8,13 @@
   "runtime_interface": "codex-chamber.v1",
   "scenario_interface": "scenario-exercise.v1",
   "init_source": "guest/phase3_init.c",
-  "init_binary_sha256": "3cee70985d2a725a9bf7ee9df6f92f43b3bbacb95aa17c90b7b490eb4ce78cbb",
+  "init_binary_sha256": "60e5d839bab1b57a95c549293cc80aa2e91e601e9563622795f2a7c8aad4413c",
   "http_vsock_forwarder_sha256": "8bec494a70fab1cf70965d3b6e777de32e46203137aa0bfcc45e27c5b74bdc9d",
   "mcp_vsock_proxy_sha256": "ee7c94159213ea4078934fa45a5f40b5df1647b3d648a9bc33e6db4add2e8ce1",
   "codex_cli_version": "0.144.4",
   "codex_binary_sha256": "2b3edc9cdfd1717fba3dbc92817205a8a2c7511d459e456d4817eeff6f78ed7a",
   "rootfs_artifact": ".crumple/cache/guest/rootfs-phase3.ext4",
-  "rootfs_sha256": "ff42d037c7090668a76a6abd4dc4fd2b0d12c772224245ad6284e2c8871ae0c5",
+  "rootfs_sha256": "5ac599fb9b11e8015a21762741279978493a19e6dfb6e89330fe6dc491311667",
   "filesystem_uuid": "6372756d-706c-6500-0000-000000000003",
   "filesystem_bytes": 536870912,
   "source_date_epoch": 1784091600,
@@ -24,5 +24,7 @@
   "contains_run_identity": false,
   "contains_canary": false,
   "contains_user_data": false,
+  "contains_task": false,
+  "task_delivery": "POST_READY_NONCE_BOUND_ASSIGNMENT_TO_RUN_TMPFS",
   "integrity_is_not_safety": true
 }

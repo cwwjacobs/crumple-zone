@@ -1,15 +1,21 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:crumple:contract:evidence-envelope:v1",
+  "$id": "urn:crumple:contract:evidence-envelope:v2",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "run_id", "scenario_id", "scenario_hash", "tool_surface_hash", "policy_id", "events", "findings", "artifacts", "checks", "previous_envelope_hash", "envelope_hash"],
+  "required": ["schema_version", "run_id", "run_mode", "run_status", "failure_code", "time_to_ready_ms", "time_to_ready_limit_ms", "scenario_id", "scenario_hash", "tool_surface_hash", "runtime_manifest_hash", "policy_id", "events", "findings", "artifacts", "checks", "previous_envelope_hash", "envelope_hash"],
   "properties": {
-    "schema_version": {"const": "evidence-envelope.v1"},
+    "schema_version": {"const": "evidence-envelope.v2"},
     "run_id": {"type": "string", "pattern": "run_[a-z0-9_]{8,64}"},
+    "run_mode": {"enum": ["FIRECRACKER_CHAMBER", "DETERMINISTIC_FIXTURE", "FRESH_SCENARIO_RERUN"]},
+    "run_status": {"enum": ["COMPLETED", "RUN_FAILED"]},
+    "failure_code": {"type": "string", "pattern": "(NONE|[A-Z][A-Z0-9_]{2,63})"},
+    "time_to_ready_ms": {"type": "integer", "minimum": -1, "maximum": 900000},
+    "time_to_ready_limit_ms": {"type": "integer", "minimum": 0, "maximum": 900000},
     "scenario_id": {"const": "poisoned-tool-surface-v1"},
     "scenario_hash": {"type": "string", "pattern": "[a-f0-9]{64}"},
     "tool_surface_hash": {"type": "string", "pattern": "[a-f0-9]{64}"},
+    "runtime_manifest_hash": {"type": "string", "pattern": "[a-f0-9]{64}"},
     "policy_id": {"enum": ["observe-v1", "capability-bound-v1"]},
     "events": {"type": "array", "maxItems": 100000, "items": {"type": "object"}},
     "findings": {"type": "array", "maxItems": 64, "items": {"type": "object"}},
@@ -17,13 +23,14 @@
       "type": "array", "maxItems": 128,
       "items": {
         "type": "object", "additionalProperties": false,
-        "required": ["artifact_id", "media_code", "sha256", "size_bytes", "quarantined"],
+        "required": ["artifact_id", "media_code", "sha256", "size_bytes", "quarantined", "path"],
         "properties": {
           "artifact_id": {"type": "string", "pattern": "art_[a-f0-9]{16}"},
-          "media_code": {"enum": ["SCENARIO_JSON", "TOOL_SURFACE_JSON", "GUEST_JSONL", "GUEST_STDERR", "GUEST_FILE", "FIRECRACKER_LOG", "POLICY_REPLAY_JSON"]},
+          "media_code": {"enum": ["SCENARIO_JSON", "TOOL_SURFACE_JSON", "RUNTIME_MANIFEST_JSON", "GUEST_JSONL", "GUEST_STDERR", "GUEST_FILE", "FIRECRACKER_LOG", "POLICY_REPLAY_JSON", "SCENARIO_RERUN_COMPARISON_JSON"]},
           "sha256": {"type": "string", "pattern": "[a-f0-9]{64}"},
           "size_bytes": {"type": "integer", "minimum": 0, "maximum": 1073741824},
-          "quarantined": {"type": "boolean"}
+          "quarantined": {"type": "boolean"},
+          "path": {"type": "string", "pattern": "[A-Za-z0-9._/-]{1,256}"}
         }
       }
     },

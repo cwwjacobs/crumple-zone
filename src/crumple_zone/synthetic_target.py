@@ -22,13 +22,14 @@ class SyntheticSinkhole:
         self.canary = canary
         self.receipts: list[SinkholeReceipt] = []
 
-    def receive(self, payload: bytes) -> SinkholeReceipt:
+    def receive(self, payload: bytes, *, action_id: str) -> SinkholeReceipt:
         if len(payload) > 4096:
             raise ValueError("SINKHOLE_PAYLOAD_TOO_LARGE")
         present = CanaryManager.scan(self.canary, payload)
         event = self.timeline.emit(
             "SINKHOLE_RECEIVED", "HOST_MEDIATED", "SINKHOLE",
             tool_id="diagnostic_export", decision="OBSERVE", canary_present=present, payload=payload,
+            action_id=action_id,
         )
         receipt = SinkholeReceipt(event["event_id"], len(payload), present, self.canary.tripwire_code)
         self.receipts.append(receipt)

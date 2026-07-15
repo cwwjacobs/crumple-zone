@@ -175,6 +175,10 @@ class FirecrackerRuntimeAdapter:
         exit_code = -1
         pid = -1
         original_error: BaseException | None = None
+        cleanup_error: BaseException | None = None
+        process_gone = False
+        run_directory_gone = False
+        sockets_gone = False
         events = [LifecycleEvent("RUN_ACCEPTED", "HOST_ENFORCED", 0)]
         try:
             shutil.copyfile(self.base_rootfs, rootfs)
@@ -230,19 +234,43 @@ class FirecrackerRuntimeAdapter:
             original_error = exc
         finally:
             if listener is not None:
-                listener.close()
+                try:
+                    listener.close()
+                except BaseException as exc:
+                    cleanup_error = cleanup_error or exc
             if process is not None and process.poll() is None:
-                _stop_process(process)
+                try:
+                    _stop_process(process)
+                except BaseException as exc:
+                    cleanup_error = cleanup_error or exc
+                    try:
+                        _force_kill_process(process)
+                    except BaseException as force_exc:
+                        cleanup_error = cleanup_error or force_exc
             if process is not None:
                 exit_code = process.poll() if process.poll() is not None else -1
                 if process.stdout is not None:
-                    process.stdout.close()
+                    try:
+                        process.stdout.close()
+                    except BaseException as exc:
+                        cleanup_error = cleanup_error or exc
             if capture is not None:
-                capture.join()
+                try:
+                    capture.join()
+                except BaseException as exc:
+                    cleanup_error = cleanup_error or exc
             process_gone = pid < 0 or not _pid_exists(pid)
             if process_gone:
                 events.append(LifecycleEvent("CHAMBER_STOPPED", "HOST_ENFORCED", int((time.monotonic() - started) * 1000)))
-            shutil.rmtree(run_directory, ignore_errors=False)
+            for path in (api_socket, lifecycle_socket, vsock_prefix):
+                try:
+                    path.unlink(missing_ok=True)
+                except BaseException as exc:
+                    cleanup_error = cleanup_error or exc
+            try:
+                shutil.rmtree(run_directory, ignore_errors=False)
+            except BaseException as exc:
+                cleanup_error = cleanup_error or exc
             run_directory_gone = not run_directory.exists()
             sockets_gone = not api_socket.exists() and not lifecycle_socket.exists() and not vsock_prefix.exists()
 
@@ -256,6 +284,10 @@ class FirecrackerRuntimeAdapter:
             if isinstance(original_error, socket.timeout):
                 raise LifecycleError("WALL_CLOCK_LIMIT_EXCEEDED") from original_error
             raise LifecycleError("FIRECRACKER_LIFECYCLE_FAILED") from original_error
+        if cleanup_error is not None:
+            raise LifecycleError("FIRECRACKER_CLEANUP_FAILED") from cleanup_error
+        if not teardown:
+            raise LifecycleError("TEARDOWN_VERIFICATION_FAILED")
         return LifecycleResult(
             interface_version=FIRECRACKER_RUNTIME_INTERFACE_VERSION,
             run_id=assignment.run_id,
@@ -429,6 +461,19 @@ def _stop_process(process: subprocess.Popen[bytes]) -> None:
             except ProcessLookupError:
                 pass
             process.wait(timeout=2)
+
+
+def _force_kill_process(process: subprocess.Popen[bytes]) -> None:
+    if process.poll() is not None:
+        return
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        pass
+    try:
+        process.wait(timeout=2)
+    except subprocess.TimeoutExpired:
+        pass
 
 
 def _pid_exists(pid: int) -> bool:

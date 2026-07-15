@@ -34,15 +34,15 @@ class ScenarioRerunCoordinator:
 
     def rerun(self, original_envelope: dict, request: dict) -> ScenarioRerunResult:
         verify_envelope(original_envelope)
+        requested_policy = {"observe": "observe-v1", "capability-bound": "capability-bound-v1"}[request["policy"]]
+        if requested_policy == original_envelope["policy_id"]:
+            raise RerunError("SAME_POLICY_RERUN_REJECTED")
         provider = ScriptedInvestigationProvider(self.repository)
         exercised = ScenarioExerciseController(self.runtime, provider).exercise(request)
         policy_id = {"observe": "observe-v1", "capability-bound": "capability-bound-v1"}[request["policy"]]
         assembler = EvidenceAssembler(self.repository, QuarantinedTraceStore(self.runtime.evidence_root))
-        envelope = assembler.assemble(exercised.lifecycle, policy_id)
-        envelope["checks"]["not_executed"].remove("SCENARIO_RERUN")
-        envelope["checks"]["executed"].append("SCENARIO_RERUN")
-        envelope = rehash_envelope(envelope)
-        projection = project_trusted_result(envelope, exercised.lifecycle.teardown_verified)
+        envelope = assembler.assemble(exercised.lifecycle, policy_id, run_mode="FRESH_SCENARIO_RERUN")
+        projection = project_trusted_result(envelope)
         comparison = compare_envelopes(original_envelope, envelope)
         return ScenarioRerunResult(exercised.lifecycle, envelope, projection, comparison)
 
@@ -50,9 +50,16 @@ class ScenarioRerunCoordinator:
 def compare_envelopes(original: dict, rerun: dict) -> dict:
     verify_envelope(original)
     verify_envelope(rerun)
-    core_equal = original["scenario_id"] == rerun["scenario_id"] and original["scenario_hash"] == rerun["scenario_hash"] and original["tool_surface_hash"] == rerun["tool_surface_hash"]
+    core_equal = (
+        original["scenario_id"] == rerun["scenario_id"]
+        and original["scenario_hash"] == rerun["scenario_hash"]
+        and original["tool_surface_hash"] == rerun["tool_surface_hash"]
+        and original["runtime_manifest_hash"] == rerun["runtime_manifest_hash"]
+    )
     run_distinct = original["run_id"] != rerun["run_id"]
     policy_changed = original["policy_id"] != rerun["policy_id"]
+    if not policy_changed:
+        raise RerunError("SAME_POLICY_RERUN_REJECTED")
     undeclared_drift = not core_equal or not run_distinct
     comparison = {
         "schema_version": "scenario-rerun-comparison.v1",
@@ -62,6 +69,9 @@ def compare_envelopes(original: dict, rerun: dict) -> dict:
         "original_envelope_hash": original["envelope_hash"],
         "rerun_envelope_hash": rerun["envelope_hash"],
         "scenario_identity_equal": core_equal,
+        "original_runtime_manifest_hash": original["runtime_manifest_hash"],
+        "rerun_runtime_manifest_hash": rerun["runtime_manifest_hash"],
+        "runtime_manifest_equal": original["runtime_manifest_hash"] == rerun["runtime_manifest_hash"],
         "fresh_run_identity": run_distinct,
         "original_policy_id": original["policy_id"],
         "rerun_policy_id": rerun["policy_id"],

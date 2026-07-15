@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import sys
 from pathlib import Path
@@ -12,17 +11,17 @@ from pathlib import Path
 from .codex_chamber import CodexChamberRuntimeAdapter
 from .contracts import validate_contract
 from .evidence import EvidenceAssembler, EvidenceError, verify_envelope
-from .projector import project_trusted_result, write_trusted_projection
+from .projector import project_trusted_result, verify_projection, write_trusted_projection
 from .receipt_verifier import verify_receipts
 from .replay import PolicyReplayEngine, verify_replay
 from .rerun import compare_envelopes, write_comparison
+from .resources import InstallLayout, _layout_for_tests, production_layout
 from .run_store import TrustedRunStore
 from .scenario_controller import ScenarioExerciseController
 from .scripted_provider import ScriptedInvestigationProvider
 from .trace_store import QuarantinedTraceStore
 
 
-REPOSITORY = Path(os.environ["CRUMPLE_REPOSITORY"]).resolve() if "CRUMPLE_REPOSITORY" in os.environ else Path(__file__).resolve().parents[2]
 TARGET = "fixture://poisoned-tool-surface-v1"
 POLICIES = {"observe": "observe-v1", "capability-bound": "capability-bound-v1"}
 
@@ -53,27 +52,31 @@ def build_parser() -> argparse.ArgumentParser:
     verify.add_argument("evidence_envelope")
     receipts = commands.add_parser("verify-receipts")
     receipts.add_argument("--require-artifacts", action="store_true")
+    receipts.add_argument("--source-root", required=True)
+    receipts.add_argument("--source-commit", required=True)
+    receipts.add_argument("--source-tree", required=True)
     return parser
 
 
-def main(argv: list[str] | None = None, repository: Path = REPOSITORY) -> int:
+def main(argv: list[str] | None = None, _test_root: Path | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    layout = _layout_for_tests(_test_root) if _test_root is not None else production_layout()
     try:
         if args.command == "exercise":
-            return _exercise(repository, args.policy)
+            return _exercise(layout, args.policy)
         if args.command == "watch":
-            return _watch(repository, args.run_id, args.operator_only, args.trace)
+            return _watch(layout, args.run_id, args.operator_only, args.trace)
         if args.command == "show":
-            return _show(repository, args.run_id)
+            return _show(layout, args.run_id)
         if args.command == "replay-policy":
-            return _replay(repository, args.run_id, args.policy)
+            return _replay(layout, args.run_id, args.policy)
         if args.command == "rerun":
-            return _rerun(repository, args.run_id, args.policy)
+            return _rerun(layout, args.run_id, args.policy)
         if args.command == "verify":
-            return _verify(repository, args.evidence_envelope)
+            return _verify(layout, args.evidence_envelope)
         if args.command == "verify-receipts":
-            return _verify_receipts(repository, args.require_artifacts)
+            return _verify_receipts(layout, args.require_artifacts, args.source_root, args.source_commit, args.source_tree)
         raise CliError("COMMAND_INVALID")
     except Exception as error:
         code = str(error) if re.fullmatch(r"[A-Z][A-Z0-9_]{2,63}", str(error)) else "COMMAND_FAILED"
@@ -81,24 +84,24 @@ def main(argv: list[str] | None = None, repository: Path = REPOSITORY) -> int:
         return 2
 
 
-def _exercise(repository: Path, policy: str) -> int:
-    evidence_root = repository / ".crumple/evidence"
+def _exercise(layout: InstallLayout, policy: str) -> int:
+    evidence_root = layout.state_root / "evidence"
     event_store = TrustedRunStore(evidence_root)
 
     def emit(event: dict) -> None:
         event_store.append(event)
         _print({"stream_code": "TRUSTED_EVENT", "event": event})
 
-    runtime = _runtime(repository)
-    provider = ScriptedInvestigationProvider(repository)
+    runtime = _runtime(layout)
+    provider = ScriptedInvestigationProvider(layout.resource_root)
     result = ScenarioExerciseController(runtime, provider).exercise(_request(policy), emit)
     trace_store = QuarantinedTraceStore(evidence_root)
-    assembler = EvidenceAssembler(repository, trace_store)
+    assembler = EvidenceAssembler(layout.resource_root, trace_store)
     envelope = assembler.assemble(result.lifecycle, POLICIES[policy])
     envelope_path = assembler.write(envelope)
-    projection = project_trusted_result(envelope, result.lifecycle.teardown_verified)
-    write_trusted_projection(projection, evidence_root)
-    (repository / ".crumple/last-run-id").write_text(result.lifecycle.run_id + "\n")
+    projection = project_trusted_result(envelope)
+    write_trusted_projection(projection, envelope, evidence_root)
+    (layout.state_root / "last-run-id").write_text(result.lifecycle.run_id + "\n")
     _print({
         "stream_code": "TRUSTED_RESULT",
         "provider_code": "SCRIPTED_MOCK_PROVIDER",
@@ -108,12 +111,12 @@ def _exercise(repository: Path, policy: str) -> int:
     })
     if not envelope_path.is_file():
         raise CliError("EVIDENCE_WRITE_FAILED")
-    return 0
+    return 0 if result.lifecycle.run_status == "COMPLETED" else 2
 
 
-def _watch(repository: Path, run_id: str, operator_only: bool, trace: str | None) -> int:
+def _watch(layout: InstallLayout, run_id: str, operator_only: bool, trace: str | None) -> int:
     _validate_run_id(run_id)
-    evidence_root = repository / ".crumple/evidence"
+    evidence_root = layout.state_root / "evidence"
     if trace is not None or operator_only:
         if trace is None or not operator_only:
             raise CliError("OPERATOR_TRACE_OPT_IN_REQUIRED")
@@ -125,66 +128,70 @@ def _watch(repository: Path, run_id: str, operator_only: bool, trace: str | None
     return 0
 
 
-def _show(repository: Path, run_id: str) -> int:
+def _show(layout: InstallLayout, run_id: str) -> int:
     _validate_run_id(run_id)
-    projection = _load_json(repository / ".crumple/evidence" / run_id / "trusted-result.json", "TRUSTED_RESULT_NOT_FOUND")
-    validate_contract("trusted_projection", projection)
+    run_root = layout.state_root / "evidence" / run_id
+    projection = _load_json(run_root / "trusted-result.json", "TRUSTED_RESULT_NOT_FOUND")
+    envelope = _load_json(run_root / "evidence-envelope.json", "EVIDENCE_ENVELOPE_NOT_FOUND")
+    verify_envelope(envelope, artifact_root=run_root, require_artifacts=True)
+    verify_projection(projection, envelope)
     _print({"stream_code": "TRUSTED_RESULT", "projection": projection})
     return 0
 
 
-def _replay(repository: Path, run_id: str, policy: str) -> int:
-    envelope = _load_envelope(repository, run_id)
+def _replay(layout: InstallLayout, run_id: str, policy: str) -> int:
+    envelope = _load_envelope(layout, run_id)
     engine = PolicyReplayEngine()
     target = POLICIES[policy]
-    path = repository / ".crumple/evidence" / run_id / f"policy-replay-{target}.json"
+    path = layout.state_root / "evidence" / run_id / f"policy-replay-{target}.json"
     if path.exists():
         record = _load_json(path, "POLICY_REPLAY_NOT_FOUND")
-        verify_replay(record)
+        verify_replay(record, envelope)
         if record["source_envelope_hash"] != envelope["envelope_hash"] or record["target_policy_id"] != target:
             raise CliError("POLICY_REPLAY_SCOPE_MISMATCH")
     else:
         record = engine.replay(envelope, target)
-        engine.write(repository / ".crumple/evidence", record)
+        engine.write(layout.state_root / "evidence", record, envelope)
     _print({"stream_code": "POLICY_REPLAY_RESULT", "replay": record})
     return 0
 
 
-def _rerun(repository: Path, run_id: str, policy: str) -> int:
-    original = _load_envelope(repository, run_id)
-    evidence_root = repository / ".crumple/evidence"
+def _rerun(layout: InstallLayout, run_id: str, policy: str) -> int:
+    original = _load_envelope(layout, run_id)
+    if POLICIES[policy] == original["policy_id"]:
+        raise CliError("SAME_POLICY_RERUN_REJECTED")
+    evidence_root = layout.state_root / "evidence"
     event_store = TrustedRunStore(evidence_root)
 
     def emit(event: dict) -> None:
         event_store.append(event)
         _print({"stream_code": "TRUSTED_EVENT", "event": event})
 
-    runtime = _runtime(repository)
-    provider = ScriptedInvestigationProvider(repository)
+    runtime = _runtime(layout)
+    provider = ScriptedInvestigationProvider(layout.resource_root)
     # The coordinator constructs its own fresh provider; callback streaming is retained by running the same strict controller path here.
     exercised = ScenarioExerciseController(runtime, provider).exercise(_request(policy), emit)
-    assembler = EvidenceAssembler(repository, QuarantinedTraceStore(evidence_root))
-    envelope = assembler.assemble(exercised.lifecycle, POLICIES[policy])
-    envelope["checks"]["not_executed"].remove("SCENARIO_RERUN")
-    envelope["checks"]["executed"].append("SCENARIO_RERUN")
-    from .evidence import rehash_envelope
-    envelope = rehash_envelope(envelope)
+    assembler = EvidenceAssembler(layout.resource_root, QuarantinedTraceStore(evidence_root))
+    envelope = assembler.assemble(exercised.lifecycle, POLICIES[policy], run_mode="FRESH_SCENARIO_RERUN")
     comparison = compare_envelopes(original, envelope)
-    projection = project_trusted_result(envelope, exercised.lifecycle.teardown_verified)
+    projection = project_trusted_result(envelope)
     assembler.write(envelope)
-    write_trusted_projection(projection, evidence_root)
+    write_trusted_projection(projection, envelope, evidence_root)
     write_comparison(evidence_root, comparison)
     _print({"stream_code": "SCENARIO_RERUN_RESULT", "comparison": comparison, "projection": projection})
     return 0
 
 
-def _verify(repository: Path, supplied: str) -> int:
-    evidence_root = (repository / ".crumple/evidence").resolve()
+def _verify(layout: InstallLayout, supplied: str) -> int:
+    evidence_root = (layout.state_root / "evidence").resolve()
     path = Path(supplied).expanduser().resolve()
     if not path.is_relative_to(evidence_root) or path.name != "evidence-envelope.json":
         raise CliError("EVIDENCE_PATH_NOT_ADMITTED")
     envelope = _load_json(path, "EVIDENCE_ENVELOPE_NOT_FOUND")
-    verify_envelope(envelope)
+    verify_envelope(envelope, artifact_root=path.parent, require_artifacts=True)
+    projection_path = path.parent / "trusted-result.json"
+    if projection_path.is_file():
+        verify_projection(_load_json(projection_path, "TRUSTED_RESULT_NOT_FOUND"), envelope)
     _print({
         "stream_code": "EVIDENCE_VERIFICATION",
         "status": "VERIFIED",
@@ -195,14 +202,28 @@ def _verify(repository: Path, supplied: str) -> int:
     return 0
 
 
-def _verify_receipts(repository: Path, require_artifacts: bool) -> int:
-    _print({"stream_code": "RECEIPT_VERIFICATION", "result": verify_receipts(repository, require_artifacts=require_artifacts)})
+def _verify_receipts(
+    layout: InstallLayout,
+    require_artifacts: bool,
+    source_root: str,
+    source_commit: str,
+    source_tree: str,
+) -> int:
+    root = Path(source_root).expanduser().resolve()
+    if layout.source_root is not None and root != layout.source_root:
+        raise CliError("SOURCE_ROOT_MISMATCH")
+    _print({"stream_code": "RECEIPT_VERIFICATION", "result": verify_receipts(
+        root,
+        require_artifacts=require_artifacts,
+        source_commit=source_commit,
+        source_tree=source_tree,
+    )})
     return 0
 
 
-def _runtime(repository: Path) -> CodexChamberRuntimeAdapter:
-    lock = _load_json(repository / "locks/phase3-guest-image.json", "PHASE3_LOCK_NOT_FOUND")
-    return CodexChamberRuntimeAdapter.for_hostile_scenario(repository, lock["rootfs_sha256"])
+def _runtime(layout: InstallLayout) -> CodexChamberRuntimeAdapter:
+    lock = _load_json(layout.resource_root / "locks/phase3-guest-image.json", "PHASE3_LOCK_NOT_FOUND")
+    return CodexChamberRuntimeAdapter.for_hostile_layout(layout.resource_root, layout.state_root, lock["rootfs_sha256"])
 
 
 def _request(policy: str) -> dict:
@@ -214,10 +235,11 @@ def _request(policy: str) -> dict:
     }
 
 
-def _load_envelope(repository: Path, run_id: str) -> dict:
+def _load_envelope(layout: InstallLayout, run_id: str) -> dict:
     _validate_run_id(run_id)
-    envelope = _load_json(repository / ".crumple/evidence" / run_id / "evidence-envelope.json", "EVIDENCE_ENVELOPE_NOT_FOUND")
-    verify_envelope(envelope)
+    root = layout.state_root / "evidence" / run_id
+    envelope = _load_json(root / "evidence-envelope.json", "EVIDENCE_ENVELOPE_NOT_FOUND")
+    verify_envelope(envelope, artifact_root=root, require_artifacts=True)
     return envelope
 
 

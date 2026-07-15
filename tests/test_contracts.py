@@ -1,4 +1,5 @@
 import copy
+import hashlib
 import json
 import unittest
 from pathlib import Path
@@ -59,7 +60,9 @@ class ContractTests(unittest.TestCase):
             "policy_id": "observe-v1",
             "tool_id": "NONE",
             "decision": "NONE",
+            "action_id": "NONE",
             "argument_projection": {"canary_present": False, "payload_bytes": 0, "argument_hash": "0" * 64},
+            "result_projection": {"present": False, "payload_bytes": 0, "result_hash": hashlib.sha256(b"").hexdigest(), "is_error": False},
             "artifact_ref": "NONE",
         }
         with self.assertRaisesRegex(ContractViolation, "AUTHORITY_PROMOTION_INVALID"):
@@ -78,6 +81,17 @@ class ContractTests(unittest.TestCase):
             with self.assertRaises(ContractViolation):
                 validate_contract("trusted_projection", mutated)
         validate_contract("trusted_projection", projection)
+
+    def test_event_cross_fields_are_exact(self):
+        event = self._event()
+        event["component"] = "MODEL_PROXY"
+        with self.assertRaisesRegex(ContractViolation, "EVENT_CROSS_FIELD_PREDICATE_INVALID"):
+            validate_contract("event", event)
+
+        event = self._event()
+        event["argument_projection"]["canary_present"] = True
+        with self.assertRaisesRegex(ContractViolation, "EVENT_ARGUMENT_PREDICATE_INVALID"):
+            validate_contract("event", event)
 
     def test_guest_semantics_field_is_rejected(self):
         projection = self._projection()
@@ -99,13 +113,37 @@ class ContractTests(unittest.TestCase):
         }
 
     @staticmethod
+    def _event():
+        return {
+            "schema_version": "event.v1",
+            "event_id": "evt_0123456789abcdef",
+            "run_id": "run_0123456789abcdef",
+            "sequence": 0,
+            "monotonic_ns": 0,
+            "code": "RUN_ACCEPTED",
+            "authority": "HOST_ENFORCED",
+            "component": "CONTROLLER",
+            "scenario_id": "poisoned-tool-surface-v1",
+            "policy_id": "observe-v1",
+            "tool_id": "NONE",
+            "decision": "NONE",
+            "action_id": "NONE",
+            "argument_projection": {"canary_present": False, "payload_bytes": 0, "argument_hash": hashlib.sha256(b"").hexdigest()},
+            "result_projection": {"present": False, "payload_bytes": 0, "result_hash": hashlib.sha256(b"").hexdigest(), "is_error": False},
+            "artifact_ref": "NONE",
+        }
+
+    @staticmethod
     def _projection():
         digest = "0" * 64
         return {
             "schema_version": "trusted-projection.v1",
             "run_id": "run_0123456789abcdef",
+            "run_status": "COMPLETED",
+            "failure_code": "NONE",
             "scenario_id": "poisoned-tool-surface-v1",
             "scenario_hash": digest,
+            "runtime_manifest_hash": digest,
             "policy_id": "observe-v1",
             "verdict": "INCONCLUSIVE",
             "findings": [],
@@ -116,6 +154,8 @@ class ContractTests(unittest.TestCase):
             "authority_sources": ["HOST_ENFORCED"],
             "limitations": ["OPERATOR_CREDENTIAL_UNAVAILABLE", "NO_GLOBAL_SAFETY_CLAIM"],
             "envelope_hash": digest,
+            "time_to_ready_ms": 1,
+            "time_to_ready_limit_ms": 1000,
             "teardown_verified": False,
         }
 

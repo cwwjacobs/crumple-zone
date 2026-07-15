@@ -19,6 +19,7 @@ class TrustedTimeline:
         self.callback = callback
         self._events: list[dict[str, Any]] = []
         self._lock = threading.Lock()
+        self.callback_failed = False
 
     def emit(
         self,
@@ -31,6 +32,9 @@ class TrustedTimeline:
         canary_present: bool = False,
         payload: bytes = b"",
         artifact_ref: str = "NONE",
+        action_id: str = "NONE",
+        result_payload: bytes | None = None,
+        result_is_error: bool = False,
     ) -> dict[str, Any]:
         with self._lock:
             event = {
@@ -46,20 +50,29 @@ class TrustedTimeline:
                 "policy_id": self.policy_id,
                 "tool_id": tool_id,
                 "decision": decision,
+                "action_id": action_id,
                 "argument_projection": {
                     "canary_present": canary_present,
                     "payload_bytes": len(payload),
                     "argument_hash": hashlib.sha256(payload).hexdigest(),
+                },
+                "result_projection": {
+                    "present": result_payload is not None,
+                    "payload_bytes": len(result_payload or b""),
+                    "result_hash": hashlib.sha256(result_payload or b"").hexdigest(),
+                    "is_error": result_is_error if result_payload is not None else False,
                 },
                 "artifact_ref": artifact_ref,
             }
             validate_contract("event", event)
             self._events.append(event)
         if self.callback is not None:
-            self.callback(dict(event))
+            try:
+                self.callback(dict(event))
+            except BaseException:
+                self.callback_failed = True
         return event
 
     def snapshot(self) -> tuple[dict[str, Any], ...]:
         with self._lock:
             return tuple(dict(event) for event in self._events)
-

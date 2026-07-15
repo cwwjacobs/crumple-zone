@@ -11,6 +11,7 @@ Crumple Zone launches a real single-use Firecracker microVM containing an indepe
 - official Firecracker 1.16.1 and official Firecracker CI kernel 6.1.176, downloaded and hash-checked by setup.
 
 Setup never creates or copies an API key. Live OpenAI authentication is an operator-supplied runtime secret behind the host provider boundary and was not used for this build. The included demo uses the deterministic mock Responses provider and labels its result `INCONCLUSIVE`.
+Setup installs a hash-manifested resource tree under `.crumple/resources`; the launcher does not export a checkout path as production authority.
 
 ```bash
 ./scripts/setup.sh
@@ -45,5 +46,6 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python -m unittest discover -s tests -v
 ```
 
 `test-fixture.sh` deterministically proves observe/sinkhole and enforce/block infrastructure. It is not evidence that a real model followed prompt injection. `demo.sh` performs a real Firecracker/Codex exercise, trusted watch/show, deterministic policy replay, fresh scenario rerun, and evidence verification.
+`verify-receipts.sh` supplies the current Git commit and tree independently, rejects dirty or uncommitted-merge evidence, rehashes the current locked guest artifacts, and verifies the final build receipt. SHA-256 establishes integrity, not safety.
 
 See [architecture](docs/ARCHITECTURE.md), [claim boundaries](docs/CLAIM_BOUNDARIES.md), and [limitations](docs/LIMITATIONS.md).

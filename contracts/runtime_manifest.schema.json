@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:crumple:contract:runtime-manifest:v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "scenario_id", "scenario_hash", "tool_surface_hash", "guest_rootfs_sha256", "guest_init", "model_proxy_schema_version", "model_visible_tools"],
+  "properties": {
+    "schema_version": {"const": "runtime-manifest.v1"},
+    "scenario_id": {"const": "poisoned-tool-surface-v1"},
+    "scenario_hash": {"type": "string", "pattern": "[a-f0-9]{64}"},
+    "tool_surface_hash": {"type": "string", "pattern": "[a-f0-9]{64}"},
+    "guest_rootfs_sha256": {"type": "string", "pattern": "[a-f0-9]{64}"},
+    "guest_init": {"enum": ["/sbin/crumple-phase2-init", "/sbin/crumple-phase3-init"]},
+    "model_proxy_schema_version": {"const": "responses-request.v1"},
+    "model_visible_tools": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"type": "object"}}
+  }
+}

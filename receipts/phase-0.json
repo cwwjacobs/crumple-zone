@@ -116,7 +116,7 @@
     {"path": "contracts/evidence_envelope.schema.json", "sha256": "ea7c08ccf1a4783b5f9598289f1e8c2b61846df483516f29baa4a4249068d6d6"},
     {"path": "scenarios/poisoned-tool-surface-v1.json", "sha256": "fb324f68d6b14e4f4288c358b90c863c2a81f6e509353341c8c326c271110632"},
     {"path": "scenarios/poisoned-tool-surface-v1.tools.json", "sha256": "f9927668c53f6b70010d4aa5fef0ce6e4faa2ffcadbf2747fc5ca66dab04dc04"},
-    {"path": "firecracker-v1.16.1-x86_64.tgz", "sha256": "382a02a869e4d6d5cb14c40577f9545e8458021ea8b0b2d3fc10ec14d9c242e6"}
+    {"path": ".crumple/cache/downloads/firecracker-v1.16.1-x86_64.tgz", "sha256": "382a02a869e4d6d5cb14c40577f9545e8458021ea8b0b2d3fc10ec14d9c242e6"}
   ],
   "invariants_exercised": [1, 2, 5, 6, 7, 8, 11, 12, 13],
   "authority_claims": [

@@ -5,15 +5,15 @@ import unittest
 from pathlib import Path
 
 from crumple_zone.codex_chamber import CodexChamberRuntimeAdapter
-from crumple_zone.evidence import EvidenceAssembler, EvidenceError, event_hash, verify_envelope
-from crumple_zone.projector import project_trusted_result
+from crumple_zone.evidence import EvidenceAssembler, EvidenceError, _envelope_hash, event_hash, verify_envelope
+from crumple_zone.projector import project_trusted_result, verify_projection
 from crumple_zone.scenario_controller import ScenarioExerciseController
 from crumple_zone.scripted_provider import ScriptedInvestigationProvider
 from crumple_zone.trace_store import QuarantinedTraceStore, TraceAccessError
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PHASE3_ROOTFS_SHA256 = "ff42d037c7090668a76a6abd4dc4fd2b0d12c772224245ad6284e2c8871ae0c5"
+PHASE3_ROOTFS_SHA256 = "5ac599fb9b11e8015a21762741279978493a19e6dfb6e89330fe6dc491311667"
 
 
 class EvidenceBoundaryTests(unittest.TestCase):
@@ -47,11 +47,15 @@ class EvidenceBoundaryTests(unittest.TestCase):
             trace_store = QuarantinedTraceStore(temporary / "evidence")
             assembler = EvidenceAssembler(ROOT, trace_store)
             envelope = assembler.assemble(lifecycle, "capability-bound-v1")
-            projection = project_trusted_result(envelope, lifecycle.teardown_verified)
+            projection = project_trusted_result(envelope)
 
             verify_envelope(envelope)
+            verify_envelope(envelope, artifact_root=temporary / "evidence" / lifecycle.run_id, require_artifacts=True)
+            verify_projection(projection, envelope)
             self.assertEqual(projection["verdict"], "INCONCLUSIVE")
             self.assertTrue(projection["teardown_verified"])
+            self.assertEqual(projection["runtime_manifest_hash"], envelope["runtime_manifest_hash"])
+            self.assertLessEqual(projection["time_to_ready_ms"], projection["time_to_ready_limit_ms"])
             self.assertIn("OPERATOR_CREDENTIAL_UNAVAILABLE", projection["limitations"])
             self.assertIn("NO_GLOBAL_SAFETY_CLAIM", projection["limitations"])
             self.assertIn("NO_CAUSAL_ATTRIBUTION", projection["limitations"])
@@ -75,7 +79,7 @@ class EvidenceBoundaryTests(unittest.TestCase):
 
             mutated_event = copy.deepcopy(envelope)
             mutated_event["events"][0]["decision"] = "ALLOW"
-            with self.assertRaisesRegex(EvidenceError, "EVIDENCE_HASH_MISMATCH"):
+            with self.assertRaisesRegex(EvidenceError, "EVIDENCE_CONTRACT_INVALID"):
                 verify_envelope(mutated_event)
             reordered = copy.deepcopy(envelope)
             reordered["events"][0], reordered["events"][1] = reordered["events"][1], reordered["events"][0]
@@ -86,10 +90,62 @@ class EvidenceBoundaryTests(unittest.TestCase):
             with self.assertRaisesRegex(EvidenceError, "EVIDENCE_HASH_MISMATCH"):
                 verify_envelope(mutated_artifact)
 
+            mutated_findings = copy.deepcopy(envelope)
+            mutated_findings["findings"] = []
+            mutated_findings["envelope_hash"] = _envelope_hash(mutated_findings)
+            with self.assertRaisesRegex(EvidenceError, "FINDINGS_NOT_RECOMPUTED_FROM_HOST_EVENTS"):
+                verify_envelope(mutated_findings)
+            mutated_checks = copy.deepcopy(envelope)
+            mutated_checks["checks"]["executed"].append("TRUSTED_PROJECTION_CLEAN")
+            mutated_checks["checks"]["not_executed"].remove("TRUSTED_PROJECTION_CLEAN")
+            mutated_checks["envelope_hash"] = _envelope_hash(mutated_checks)
+            with self.assertRaisesRegex(EvidenceError, "CHECKS_NOT_DERIVED_FROM_EXECUTED_CONTROLS"):
+                verify_envelope(mutated_checks)
+            mutated_projection = copy.deepcopy(projection)
+            mutated_projection["teardown_verified"] = False
+            with self.assertRaisesRegex(EvidenceError, "TRUSTED_PROJECTION_ENVELOPE_MISMATCH"):
+                verify_projection(mutated_projection, envelope)
+
+            retained = temporary / "evidence" / lifecycle.run_id / envelope["artifacts"][0]["path"]
+            original_bytes = retained.read_bytes()
+            retained.write_bytes(original_bytes + b" ")
+            with self.assertRaisesRegex(EvidenceError, "RETAINED_ARTIFACT_HASH_MISMATCH"):
+                verify_envelope(envelope, artifact_root=temporary / "evidence" / lifecycle.run_id, require_artifacts=True)
+            retained.write_bytes(original_bytes)
+
             path = assembler.write(envelope)
             self.assertTrue(path.is_file())
             with self.assertRaisesRegex(EvidenceError, "EVIDENCE_ENVELOPE_ALREADY_EXISTS"):
                 assembler.write(envelope)
+
+    def test_callback_failure_emits_typed_failed_envelope_after_verified_teardown(self):
+        with tempfile.TemporaryDirectory(prefix="crumple-failed-envelope-") as directory:
+            temporary = Path(directory)
+            cache = ROOT / ".crumple/cache"
+            runtime = CodexChamberRuntimeAdapter(
+                ROOT, cache / "firecracker/v1.16.1/firecracker-v1.16.1-x86_64",
+                cache / "kernel/6.1.176/vmlinux-6.1.176", cache / "guest/rootfs-phase3.ext4",
+                temporary / "runs", temporary / "evidence", PHASE3_ROOTFS_SHA256, "/sbin/crumple-phase3-init",
+            )
+            request = {
+                "schema_version": "run-request.v1", "scenario_uri": "fixture://poisoned-tool-surface-v1",
+                "policy": "capability-bound", "limits": {"vcpu_count": 1, "memory_mib": 1024, "wall_seconds": 90, "output_bytes": 2097152, "model_requests": 5},
+            }
+
+            def fail_callback(_event):
+                raise RuntimeError("forced callback failure")
+
+            lifecycle = ScenarioExerciseController(runtime, ScriptedInvestigationProvider(ROOT)).exercise(request, fail_callback).lifecycle
+            self.assertEqual(lifecycle.run_status, "RUN_FAILED")
+            self.assertEqual(lifecycle.failure_code, "EVENT_CALLBACK_FAILED")
+            self.assertTrue(lifecycle.teardown_verified)
+            assembler = EvidenceAssembler(ROOT, QuarantinedTraceStore(temporary / "evidence"))
+            envelope = assembler.assemble(lifecycle, "capability-bound-v1")
+            projection = project_trusted_result(envelope)
+            self.assertEqual(envelope["run_status"], "RUN_FAILED")
+            self.assertEqual(projection["verdict"], "RUN_FAILED")
+            self.assertTrue(projection["teardown_verified"])
+            self.assertEqual(list((temporary / "runs").iterdir()), [])
 
 
 if __name__ == "__main__":

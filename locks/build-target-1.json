@@ -1,12 +1,12 @@
 {
   "schema_version": "build-target-lock.v1",
   "target_id": "BUILD_TARGET_1",
-  "created_at": "2026-07-15T05:30:52-05:00",
-  "repository_commit": "e873d38c41935d8b24e54d8693c8c80d40e73c02",
-  "working_tree_state": "UNCOMMITTED_BUILD_ARTIFACTS",
+  "created_at": "2026-07-15T08:04:42-05:00",
+  "repository_commit": "8db8b220dc5efe0e08ba8738061d0714984811d9",
+  "working_tree_state": "SOURCE_IDENTITY_EXTERNALLY_VERIFIED",
   "receipt_hash_algorithm": "SHA256",
   "phase_receipts": [
-    {"phase_id": "PHASE_0", "path": "receipts/phase-0.json", "sha256": "9308a938cd0d96ba49ad84097a2145a6a7195ba87de2745c107a96cb727443ce"},
+    {"phase_id": "PHASE_0", "path": "receipts/phase-0.json", "sha256": "8800f4e57a088082df508003b422622f3477081772b05f1f039659e8de580eb6"},
     {"phase_id": "PHASE_1", "path": "receipts/phase-1.json", "sha256": "4de542513e43e1e2b621300c48bfeed43c52dda40a07c3ad33ae8cd1bf83bdc5"},
     {"phase_id": "PHASE_2", "path": "receipts/phase-2.json", "sha256": "bcb3c00af9be3f5d89925e04baab6298af3b11a81a9ec5ead98d0e9937e4276e"},
     {"phase_id": "PHASE_3", "path": "receipts/phase-3.json", "sha256": "f70a7def8748c2e509cd54711ee312aa515dc045d0278f7b03f898d30babcbff"},
@@ -22,7 +22,7 @@
     "firecracker_binary_sha256": "2fd0171309af7e24cf8dafc8a6f921c1434c49b5f9349bb996b7ed0a4deb8aa7",
     "guest_kernel_version": "6.1.176",
     "guest_kernel_sha256": "b20af7585283b051f16f6ece46e7064165054efe112c4ab0e26a06ff8ebe9da4",
-    "phase3_rootfs_sha256": "ff42d037c7090668a76a6abd4dc4fd2b0d12c772224245ad6284e2c8871ae0c5",
+    "phase3_rootfs_sha256": "5ac599fb9b11e8015a21762741279978493a19e6dfb6e89330fe6dc491311667",
     "codex_cli_version": "0.144.4",
     "codex_binary_sha256": "2b3edc9cdfd1717fba3dbc92817205a8a2c7511d459e456d4817eeff6f78ed7a",
     "python_version": "3.14.6",
@@ -34,16 +34,21 @@
     "observation_skill_sha256": "a6d4bdd244c3883335c5b4f60cfe0656cabf63ea41c8ba404322ba465d8e2064",
     "runtime_lock_sha256": "a702a2897f64b05d11560114be0f95fbd09637bd42f94b64d0a67f77f867267d",
     "scenario_lock_sha256": "3cc9e8396dc93c708f6d6428cc6a87e6555454f2f7b30d350208cac5eca441fb",
-    "phase3_image_lock_sha256": "c804e27d5a9ca732f11539892f82ebccd1d2b9c0cd99d93d9a360a808d5bf62f"
+    "phase3_image_lock_sha256": "5ea923f139f508f6936db1450667c9723506ad66e6314092a3d6f2fff98e4d18",
+    "event_contract_sha256": "c18cb8794e1c2002c3ad009f78f5152173bd31cf3e9e682e5509d571dfe33d5a",
+    "evidence_contract_sha256": "2a5b10bdeb5b6aff4019a6335dee8746e512ffe081a9197d8ba6b435053b632a",
+    "projection_contract_sha256": "a9303b48c5d12623370cf8f3201fcdf6aa9c64b9999a40e1d1d84cf92e9ac4ef",
+    "runtime_manifest_contract_sha256": "f10549e9c310fd252fe4dd366b41af17275b0f05a79d69fe4fe31a4c61d381c3",
+    "policy_replay_contract_sha256": "0e0e4504400b78eac3da6df1347b072632cf0632c4a795ffa812052e6331a400"
   },
   "retained_acceptance_evidence": {
-    "source_run_id": "run_1a01aab7d9a4b0eb",
-    "source_envelope_file_sha256": "8e0ec6308d91637dca11e28b7ab0d66b6a162773f5b9ff4637b3dd452ba1e235",
-    "source_trusted_result_file_sha256": "17a175ffec966b277b3595479a80d3e788f2a8c652f6e6f16b20321f785185b2",
-    "policy_replay_file_sha256": "1687160e3ce967a37780e40272f36e33a26db79a026fb2d2d0aa820e74d4428a",
-    "rerun_id": "run_18146351e03dab0d",
-    "rerun_envelope_file_sha256": "ac47fd98621f22e3cd6919d0c09eaf282711d636cf2f3eef904609ddebb72d2b",
-    "rerun_comparison_file_sha256": "94647fb850637bc11169fa188e82d6846fdbff5f4837326b11ae32ed05247370"
+    "source_run_id": "run_315196d159351337",
+    "source_envelope_file_sha256": "2acd011823f5acf963ddbbeed1681746d36ff6df830d611e74708bad71a03538",
+    "source_trusted_result_file_sha256": "b9e1492122ba6bbc119f9138df2f9f96194cc18243e12fe16660711c9b62ef9b",
+    "policy_replay_file_sha256": "3958f858d54f83c8f4fe4b39238018159bd9555bdb1cc35aba012e75b00845f3",
+    "rerun_id": "run_7db0fccaf4908ce0",
+    "rerun_envelope_file_sha256": "d0745f291da44f2bdd1265ba7ee6004fb732d534b32f3938c7427b016a15b454",
+    "rerun_comparison_file_sha256": "d40f8f101135b4a897127dab0e23ea71ac10cc026f4688d1a874cd031ef00bed"
   },
   "bounded_status": {
     "phase_result": "REPAIRED_PASS",

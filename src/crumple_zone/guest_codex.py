@@ -50,6 +50,7 @@ def build_exec_command(codex_path: str, workspace: Path, proxy_base_url: str, pr
         f"model_providers.{CODEX_PROVIDER_ID}={provider}",
         "--config",
         'history.persistence="none"',
+        "--config",
+        'web_search="disabled"',
         prompt,
     ]
-

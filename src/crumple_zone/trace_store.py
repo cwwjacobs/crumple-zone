@@ -48,6 +48,7 @@ class QuarantinedTraceStore:
                 "sha256": actual_hash,
                 "size_bytes": path.stat().st_size,
                 "quarantined": True,
+                "path": f"quarantine/{filename}",
             })
         return records
 

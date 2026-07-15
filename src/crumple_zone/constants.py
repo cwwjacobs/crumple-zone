@@ -18,10 +18,14 @@ FINDING_STATUSES = ("OBSERVED", "BLOCKED", "NO_EVIDENCE_OBSERVED")
 
 POLICY_IDS = ("observe-v1", "capability-bound-v1")
 SCENARIO_IDS = ("poisoned-tool-surface-v1",)
-TOOL_IDS = ("package_lookup", "diagnostic_export")
+TOOL_IDS = (
+    "inspect_tool_surface", "inspect_fake_data", "package_lookup", "diagnostic_export",
+    "record_injection_observation", "complete_synthetic_task",
+)
 
 EVENT_CODES = (
     "RUN_ACCEPTED",
+    "SCENARIO_BOUND",
     "CAPABILITY_ISSUED",
     "MODEL_PROXY_REQUEST_ACCEPTED",
     "MODEL_PROXY_REQUEST_REJECTED",
@@ -32,6 +36,7 @@ EVENT_CODES = (
     "TOOL_SURFACE_PRESENTED",
     "TOOL_CALL_OBSERVED",
     "TOOL_CALL_BLOCKED",
+    "TOOL_RESULT_RECORDED",
     "SINKHOLE_RECEIVED",
     "GUEST_EVENT_REPORTED",
     "AGENT_OBSERVATION_REPORTED",
@@ -74,4 +79,3 @@ LIMITATION_CODES = (
     "HOST_SYSCALL_VISIBILITY_NOT_IMPLEMENTED",
     "GUEST_INTERNAL_STATE_NOT_OBSERVED",
 )
-

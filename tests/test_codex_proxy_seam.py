@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import socket
 import subprocess
 import tempfile
 import unittest
@@ -8,7 +9,9 @@ from pathlib import Path
 
 from crumple_zone.guest_codex import build_exec_command
 from crumple_zone.model_proxy import CapabilityManager, HostModelProxy, MockResponsesProvider, ProxyLimits
+from crumple_zone.model_proxy import ProxyRejection
 from crumple_zone.model_proxy_http import running_proxy
+from crumple_zone.vsock_services import _read_http_request
 
 
 class CodexProxySeamTests(unittest.TestCase):
@@ -64,6 +67,14 @@ class CodexProxySeamTests(unittest.TestCase):
     def test_config_seam_rejects_arbitrary_proxy_destination(self):
         with self.assertRaisesRegex(ValueError, "MODEL_PROXY_BASE_URL_NOT_ALLOWED"):
             build_exec_command("/usr/bin/codex", Path("/tmp").resolve(), "https://example.com/v1", "bounded")
+
+    def test_vsock_http_reader_rejects_premature_body_eof(self):
+        host, guest = socket.socketpair()
+        with host, guest:
+            guest.sendall(b"POST /v1/responses HTTP/1.1\r\nContent-Length: 5\r\n\r\nab")
+            guest.shutdown(socket.SHUT_WR)
+            with self.assertRaisesRegex(ProxyRejection, "REQUEST_HTTP_PREMATURE_EOF"):
+                _read_http_request(host, 64)
 
 
 if __name__ == "__main__":

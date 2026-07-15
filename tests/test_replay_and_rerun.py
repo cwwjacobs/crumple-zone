@@ -2,11 +2,18 @@ import copy
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from crumple_zone.codex_chamber import CodexChamberRuntimeAdapter
 from crumple_zone.evidence import EvidenceAssembler, rehash_envelope, verify_envelope
 from crumple_zone.fixture_driver import exercise_fixture
-from crumple_zone.replay import PolicyReplayEngine, ReplayError, bind_replay_to_envelope, verify_replay
+from crumple_zone.replay import (
+    PolicyReplayEngine,
+    ReplayError,
+    _replay_hash,
+    bind_replay_to_envelope,
+    verify_replay,
+)
 from crumple_zone.rerun import RerunError, ScenarioRerunCoordinator, compare_envelopes, write_comparison
 from crumple_zone.scenario_controller import ScenarioExerciseController
 from crumple_zone.scripted_provider import ScriptedInvestigationProvider
@@ -14,15 +21,15 @@ from crumple_zone.trace_store import QuarantinedTraceStore
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PHASE3_ROOTFS_SHA256 = "ff42d037c7090668a76a6abd4dc4fd2b0d12c772224245ad6284e2c8871ae0c5"
+PHASE3_ROOTFS_SHA256 = "5ac599fb9b11e8015a21762741279978493a19e6dfb6e89330fe6dc491311667"
 
 
 class ReplayAndRerunTests(unittest.TestCase):
     def test_policy_replay_is_deterministic_and_changes_diagnostic_decision(self):
         fixture = exercise_fixture(ROOT, "observe-v1", "run_replayfixture01")
         engine = PolicyReplayEngine()
-        first = engine.replay_events(fixture.run_id, fixture.policy_id, "0" * 64, list(fixture.events), "capability-bound-v1")
-        second = engine.replay_events(fixture.run_id, fixture.policy_id, "0" * 64, list(fixture.events), "capability-bound-v1")
+        first = engine.replay(fixture.envelope, "capability-bound-v1")
+        second = engine.replay(fixture.envelope, "capability-bound-v1")
         self.assertEqual(first, second)
         diagnostic = next(decision for decision in first["decisions"] if decision["tool_id"] == "diagnostic_export")
         self.assertEqual(diagnostic["recorded_decision"], "OBSERVE")
@@ -31,7 +38,18 @@ class ReplayAndRerunTests(unittest.TestCase):
         mutated = copy.deepcopy(first)
         mutated["decisions"][0]["replayed_decision"] = "BLOCK"
         with self.assertRaisesRegex(ReplayError, "POLICY_REPLAY_HASH_MISMATCH"):
-            verify_replay(mutated)
+            verify_replay(mutated, fixture.envelope)
+
+        self_consistent_forgery = copy.deepcopy(mutated)
+        self_consistent_forgery["replay_hash"] = _replay_hash(self_consistent_forgery)
+        with self.assertRaisesRegex(ReplayError, "POLICY_REPLAY_SOURCE_RECOMPUTATION_MISMATCH"):
+            verify_replay(self_consistent_forgery, fixture.envelope)
+
+        unknown_field = copy.deepcopy(first)
+        unknown_field["decisions"][0]["provider_url"] = "https://example.invalid"
+        unknown_field["replay_hash"] = _replay_hash(unknown_field)
+        with self.assertRaisesRegex(ReplayError, "POLICY_REPLAY_SCHEMA_INVALID"):
+            verify_replay(unknown_field, fixture.envelope)
 
     def test_fresh_scenario_rerun_is_comparable_distinct_and_torn_down(self):
         with tempfile.TemporaryDirectory(prefix="crumple-phase5-") as directory:
@@ -55,7 +73,7 @@ class ReplayAndRerunTests(unittest.TestCase):
 
             replay_engine = PolicyReplayEngine()
             replay = replay_engine.replay(original_envelope, "capability-bound-v1")
-            replay_path = replay_engine.write(temporary / "evidence", replay)
+            replay_path = replay_engine.write(temporary / "evidence", replay, original_envelope)
             replay_bound = bind_replay_to_envelope(original_envelope, replay_path, replay)
             verify_envelope(replay_bound)
             self.assertEqual(replay_bound["previous_envelope_hash"], original_envelope["envelope_hash"])
@@ -65,6 +83,7 @@ class ReplayAndRerunTests(unittest.TestCase):
             comparison = rerun.comparison
             self.assertEqual(comparison["mode"], "FRESH_SCENARIO_RERUN_NONDETERMINISTIC")
             self.assertTrue(comparison["scenario_identity_equal"])
+            self.assertTrue(comparison["runtime_manifest_equal"])
             self.assertTrue(comparison["fresh_run_identity"])
             self.assertTrue(comparison["policy_changed"])
             self.assertFalse(comparison["undeclared_drift"])
@@ -77,12 +96,24 @@ class ReplayAndRerunTests(unittest.TestCase):
             self.assertEqual(list((temporary / "runs").iterdir()), [])
             self.assertTrue(write_comparison(temporary / "evidence", comparison).is_file())
 
+            coordinator = ScenarioRerunCoordinator(ROOT, runtime)
+            with patch.object(ScenarioExerciseController, "exercise") as exercise:
+                with self.assertRaisesRegex(RerunError, "SAME_POLICY_RERUN_REJECTED"):
+                    coordinator.rerun(original_envelope, self._request("observe"))
+                exercise.assert_not_called()
+
             drifted = copy.deepcopy(rerun.envelope)
             drifted["scenario_hash"] = "f" * 64
             next(artifact for artifact in drifted["artifacts"] if artifact["media_code"] == "SCENARIO_JSON")["sha256"] = "f" * 64
             drifted = rehash_envelope(drifted)
             with self.assertRaisesRegex(RerunError, "SCENARIO_RERUN_UNDECLARED_DRIFT"):
                 compare_envelopes(original_envelope, drifted)
+
+            manifest_drift = copy.deepcopy(rerun.envelope)
+            manifest_drift["runtime_manifest_hash"] = "e" * 64
+            manifest_drift = rehash_envelope(manifest_drift)
+            with self.assertRaisesRegex(RerunError, "SCENARIO_RERUN_UNDECLARED_DRIFT"):
+                compare_envelopes(original_envelope, manifest_drift)
 
     @staticmethod
     def _request(policy: str) -> dict:
